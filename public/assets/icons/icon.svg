@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">RutinKu</title>
+  <desc id="description">Huruf R dengan tanda semak untuk rutin selesai</desc>
+  <rect width="512" height="512" rx="112" fill="#345995"/>
+  <circle cx="256" cy="256" r="172" fill="#ffffff" opacity="0.12"/>
+  <path d="M154 136h119c76 0 123 40 123 105 0 47-25 80-68 96l78 111h-86l-65-99h-27v99h-74V136zm74 63v89h39c35 0 54-16 54-45 0-29-19-44-54-44h-39z" fill="#ffffff"/>
+  <path d="M259 326l39 39 86-94" fill="none" stroke="#8fe3b0" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
