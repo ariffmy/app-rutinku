@@ -12,7 +12,7 @@ RutinKu ialah Progressive Web App (PWA) mobile-first untuk mengurus rutin keluar
 
 Rujuk [architecture](docs/ARCHITECTURE.md), [deployment checklist](docs/CPANEL_DEPLOYMENT.md), dan [security scan](docs/SECURITY_SCAN_PHASE_11.md).
 
-## Setup
+## Local/development setup
 
 Keperluan: PHP 8.2+ dengan `intl`, `mbstring`, `mysqli`, `json`, `openssl`, `fileinfo`; Composer 2; MySQL 8+ atau MariaDB yang disokong.
 
@@ -35,8 +35,19 @@ composer validate --strict
 composer audit --locked --no-dev
 ```
 
-Final verification: **79 tests, 362 assertions**, 155 fail PHP lint, migration 1–14 refresh + seed berjaya, Composer sah, dan tiada advisory dependency produksi.
+Verification selepas production initialization: **120 tests, 554 assertions** lulus, termasuk **41 tests, 192 assertions** untuk seeders. Seeder tests dalam `tests/feature/SeederInitializationTest.php` menggunakan SQLite `:memory:` yang terasing.
 
 ## Production
 
 Gunakan HTTPS, `CI_ENVIRONMENT = production`, `app.forceGlobalSecureRequests = true`, `cookie.secure = true`, encryption key rawak, dan document root tepat ke `public/`. Ikut [CPANEL_DEPLOYMENT.md](docs/CPANEL_DEPLOYMENT.md).
+
+Untuk first setup, isi tujuh `RUTINKU_*` placeholders dalam private `.env`, kemudian jalankan:
+
+```bash
+php spark migrate
+php spark db:seed ProductionSeeder
+```
+
+Seeder mencipta satu family dan dua Parent sahaja. Selepas login, buka **Children**, cipta tiga Child melalui UI, kemudian provision peranti masing-masing. Tiada public registration atau data demo dicipta. `DemoSeeder` kini disekat dalam production.
+
+Rujuk [production initialization](docs/PRODUCTION_INITIALIZATION.md) untuk exact env variables, validation, rerun behaviour, dan tindakan selamat jika data live bercanggah. Seeder tidak reset password atau menukar demo data yang sudah live.

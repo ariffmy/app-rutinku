@@ -51,11 +51,19 @@ Run from the private application root:
 
 ```bash
 composer install --no-dev --optimize-autoloader
-php spark migrate --all
+php spark migrate
 php spark cache:clear
 ```
 
-Run `php spark db:seed DemoSeeder` only in a disposable development/staging database. It creates known demonstration credentials and must not be used for production family data.
+For controlled first setup, configure all seven private `RUTINKU_*` variables listed in [PRODUCTION_INITIALIZATION.md](PRODUCTION_INITIALIZATION.md), then run:
+
+```bash
+php spark db:seed ProductionSeeder
+```
+
+This creates one family and two Parent users only. Login as Parent, open **Children**, create the three Child accounts in the existing UI, and provision each Child device. No schema change is introduced by these seeders. Run initialization serially; reruns preserve existing passwords and stop on conflicting live data rather than replacing it.
+
+`DemoSeeder` creates known demonstration credentials only in development/testing and is now blocked by code in production. Existing live demo data requires a separate reviewed migration; neither seeder deletes or converts it.
 
 Before migrating a live upgrade, take a database backup and verify its restore procedure. Run the full test suite against the target MariaDB/MySQL version in staging.
 

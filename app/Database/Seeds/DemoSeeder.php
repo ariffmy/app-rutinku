@@ -3,21 +3,15 @@
 namespace App\Database\Seeds;
 
 use App\Enums\UserRole;
-use CodeIgniter\Database\Seeder;
+use RuntimeException;
 
-class DemoSeeder extends Seeder
+class DemoSeeder extends FamilyInitializationSeeder
 {
     public function run(): void
     {
-        $now = date('Y-m-d H:i:s');
-        $this->db->transStart();
-
-        $this->db->table('families')->insert([
-            'name' => 'Demo Family',
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-        $familyId = (int) $this->db->insertID();
+        if (ENVIRONMENT === 'production' || env('CI_ENVIRONMENT') === 'production') {
+            throw new RuntimeException('DemoSeeder is disabled in production. Use ProductionSeeder for controlled first setup.');
+        }
 
         $users = [
             ['name' => 'Parent One', 'email' => 'parent1@example.com', 'username' => null, 'password' => 'password', 'role' => UserRole::PARENT],
@@ -27,42 +21,6 @@ class DemoSeeder extends Seeder
             ['name' => 'Child Three', 'email' => null, 'username' => 'child-three-internal', 'password' => bin2hex(random_bytes(32)), 'role' => UserRole::CHILD],
         ];
 
-        foreach ($users as $user) {
-            $this->db->table('users')->insert([
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'username' => $user['username'],
-                'password_hash' => password_hash($user['password'], PASSWORD_DEFAULT),
-                'role' => $user['role']->value,
-                'is_active' => true,
-                'last_login_at' => null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-            $userId = (int) $this->db->insertID();
-
-            $this->db->table('family_users')->insert([
-                'family_id' => $familyId,
-                'user_id' => $userId,
-                'created_at' => $now,
-            ]);
-
-            if ($user['role'] === UserRole::CHILD) {
-                $this->db->table('child_profiles')->insert([
-                    'user_id' => $userId,
-                    'avatar' => null,
-                    'date_of_birth' => null,
-                    'is_ranking_eligible' => true,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-            }
-        }
-
-        $this->db->transComplete();
-
-        if ($this->db->transStatus() === false) {
-            throw new \RuntimeException('Demo data could not be seeded.');
-        }
+        $this->initializeFamily('Demo Family', $users, false);
     }
 }
