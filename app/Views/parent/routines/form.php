@@ -4,7 +4,8 @@
 <?php
 $dayNames = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
 $selectedDays = (array) (old('days') ?? ($routine['days'] ?? []));
-$selectedChild = (int) (old('child_user_id') ?? ($routine['child_user_id'] ?? 0));
+$selectedChild = old('child_user_id') ?? ($routine['child_user_id'] ?? '');
+$selectedChild = is_scalar($selectedChild) ? (string) $selectedChild : '';
 $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine['is_active'] ?? true);
 ?>
 <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
@@ -30,12 +31,20 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
         <div class="row g-3">
             <div class="col-12 col-md-6">
                 <label for="child_user_id" class="form-label">Child</label>
-                <select id="child_user_id" name="child_user_id" class="form-select" required>
+                <select id="child_user_id" name="child_user_id" class="form-select" required<?= ! $routine ? ' aria-describedby="child-selection-help"' : '' ?>>
                     <option value="">Pilih Child</option>
+                    <?php if (! $routine && $children !== []): ?>
+                        <option value="all" <?= $selectedChild === 'all' ? 'selected' : '' ?>>Semua anak</option>
+                    <?php endif ?>
                     <?php foreach ($children as $child): ?>
-                        <option value="<?= esc($child['id']) ?>" <?= $selectedChild === (int) $child['id'] ? 'selected' : '' ?>><?= esc($child['name']) ?></option>
+                        <option value="<?= esc($child['id']) ?>" <?= $selectedChild === (string) $child['id'] ? 'selected' : '' ?>><?= esc($child['name']) ?></option>
                     <?php endforeach ?>
                 </select>
+                <?php if (! $routine): ?>
+                    <div id="child-selection-help" class="form-text"><?= $children === []
+                        ? 'Tiada anak aktif. Tambah atau aktifkan anak dahulu.'
+                        : 'Semua anak: cipta salinan routine untuk setiap anak aktif dalam keluarga. Task dan perubahan selepas ini diurus berasingan bagi setiap anak.' ?></div>
+                <?php endif ?>
             </div>
             <div class="col-12 col-md-6">
                 <label for="name" class="form-label">Nama routine</label>

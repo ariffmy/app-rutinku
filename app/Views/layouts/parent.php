@@ -15,23 +15,38 @@
     <link href="<?= base_url('assets/css/app.css') ?>" rel="stylesheet">
 </head>
 <body class="parent-shell">
-<nav class="navbar navbar-expand bg-white border-bottom sticky-top">
-    <div class="container-fluid container-xl">
+<?php
+$navigation = [
+    ['Dashboard', 'parent.dashboard', url_is('dashboard')],
+    ['Children', 'parent.children', url_is('children*')],
+    ['Routines', 'parent.routines', url_is('routines*') || url_is('routine-tasks*')],
+    ['Points', 'parent.points', url_is('points*')],
+    ['Rewards', 'parent.rewards', url_is('rewards*') || url_is('reward-redemptions*')],
+    ['Ranking', 'parent.ranking', url_is('ranking*')],
+    ['Reports', 'parent.reports', url_is('reports*')],
+];
+?>
+<nav class="parent-nav bg-white border-bottom sticky-top" aria-label="Navigasi Parent" data-parent-nav>
+    <div class="container-xl parent-nav-layout">
         <a class="navbar-brand fw-bold text-primary" href="<?= route_to('parent.dashboard') ?>">RutinKu</a>
-        <div class="d-flex align-items-center gap-1 ms-2">
-            <a href="<?= route_to('parent.dashboard') ?>" class="btn btn-link btn-sm text-decoration-none">Dashboard</a>
-            <a href="<?= route_to('parent.children') ?>" class="btn btn-link btn-sm text-decoration-none">Children</a>
-            <a href="<?= route_to('parent.routines') ?>" class="btn btn-link btn-sm text-decoration-none">Routines</a>
-            <a href="<?= route_to('parent.points') ?>" class="btn btn-link btn-sm text-decoration-none">Points</a>
-            <a href="<?= route_to('parent.rewards') ?>" class="btn btn-link btn-sm text-decoration-none">Rewards</a>
-            <a href="<?= route_to('parent.ranking') ?>" class="btn btn-link btn-sm text-decoration-none">Ranking</a>
-            <a href="<?= route_to('parent.reports') ?>" class="btn btn-link btn-sm text-decoration-none">Reports</a>
+        <button type="button" class="btn btn-outline-primary parent-menu-toggle" aria-controls="parent-nav-panel" aria-expanded="false" data-parent-menu-toggle hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span>Menu</span>
+        </button>
+        <div id="parent-nav-panel" class="parent-nav-panel">
+            <ul class="parent-nav-links">
+                <?php foreach ($navigation as [$label, $route, $active]): ?>
+                    <li><a href="<?= route_to($route) ?>" class="parent-nav-link<?= $active ? ' is-active' : '' ?>"<?= $active ? ' aria-current="page"' : '' ?>><?= esc($label) ?></a></li>
+                <?php endforeach ?>
+            </ul>
+            <div class="parent-nav-actions">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-install-app hidden>Pasang app</button>
+                <form action="<?= route_to('parent.logout') ?>" method="post">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">Log keluar</button>
+                </form>
+            </div>
         </div>
-        <button type="button" class="btn btn-outline-primary btn-sm ms-auto me-2" data-install-app hidden>Pasang app</button>
-        <form action="<?= route_to('parent.logout') ?>" method="post">
-            <?= csrf_field() ?>
-            <button type="submit" class="btn btn-outline-secondary btn-sm">Log keluar</button>
-        </form>
     </div>
 </nav>
 

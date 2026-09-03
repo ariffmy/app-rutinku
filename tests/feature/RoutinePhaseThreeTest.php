@@ -19,6 +19,7 @@ use Config\Services;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * @internal
@@ -261,6 +262,174 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
         $this->assertArrayHasKey('child/progress', $routes->getRoutes('GET'));
         $this->assertArrayHasKey('ranking', $routes->getRoutes('GET'));
         $this->assertArrayNotHasKey('ranking', $routes->getRoutes('POST'));
+    }
+
+    public function testAllChildrenGetIndependentRoutinesWithTheSameFieldsAndDays(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $data = $this->routineData($childId);
+        $ids = $service->createForAllChildren($parentId, $data, [5, 1, 5]);
+        $this->assertCount(3, $ids);
+        $children = (new UserModel())->where('role', 'child')->findAll();
+        $this->assertEqualsCanonicalizing(array_map(static fn ($child) => (int) $child->id, $children),
+            array_map('intval', array_column((new RoutineModel())->findAll(), 'child_user_id')));
+        foreach ($ids as $id) {
+            $routine = $service->getForParent($parentId, $id);
+            $this->assertSame($data['name'], $routine['name']);
+            $this->assertSame($data['description'], $routine['description']);
+            $this->assertSame($data['type'], $routine['type']);
+            $this->assertSame('07:00:00', $routine['start_time']);
+            $this->assertSame([1, 5], $routine['days']);
+            $this->assertSame([], $routine['tasks']);
+        }
+        $service->createTask($parentId, $ids[0], $this->taskData('Only this child', 4));
+        $this->assertSame([], $service->tasksForRoutine($ids[1]));
+        $this->assertSame([], $service->tasksForRoutine($ids[2]));
+    }
+
+    public function testAllChildrenExcludesInactiveChildrenAndOtherFamilies(): void
+    {
+        [$parentId, $childId, $childTwoId] = $this->demoIds(true);
+        (new UserModel())->update($childTwoId, ['is_active' => 0]);
+        $outsideParent = $this->createOutsideFamilyParent();
+        $outsideFamily = (new \App\Services\FamilyService())->currentFamilyForUser($outsideParent);
+        $thirdChild = (new UserModel())->where('username', 'child-three-internal')->first();
+        $this->db->table('family_users')->where('user_id', $thirdChild->id)->update(['family_id' => $outsideFamily['id']]);
+
+        // A posted child ID is deliberately ignored for the all-children operation.
+        $ids = (new RoutineService())->createForAllChildren($parentId, $this->routineData((int) $thirdChild->id), [1]);
+        $this->assertCount(1, $ids);
+        $this->assertSame($childId, (int) (new RoutineModel())->find($ids[0])['child_user_id']);
+        $this->assertSame(1, (new RoutineModel())->countAllResults());
+    }
+
+    public function testAllChildrenRejectsFamilyWithNoActiveChildren(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $this->db->table('users')->where('role', 'child')->update(['is_active' => 0]);
+        try {
+            (new RoutineService())->createForAllChildren($parentId, $this->routineData($childId), [1]);
+            $this->fail('An empty selection must not report success.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('Tiada anak aktif', $exception->getMessage());
+        }
+        $this->assertSame(0, (new RoutineModel())->countAllResults());
+    }
+
+    public function testChildCannotUseAllChildrenService(): void
+    {
+        [, $childId] = $this->demoIds();
+        try {
+            (new RoutineService())->createForAllChildren($childId, $this->routineData($childId), [1]);
+            $this->fail('A Child cannot create routines.');
+        } catch (AuthorizationException) {
+            $this->assertSame(0, (new RoutineModel())->countAllResults());
+        }
+    }
+
+    public function testAllChildrenRollsBackEarlierCopiesIfALaterInsertFails(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $model = new class ($this->db) extends RoutineModel {
+            public int $attempts = 0;
+
+            public function insert($row = null, bool $returnID = true)
+            {
+                if (++$this->attempts === 2) {
+                    throw new InvalidArgumentException('Simulated second-child insert failure.');
+                }
+
+                return parent::insert($row, $returnID);
+            }
+        };
+        try {
+            (new RoutineService(routines: $model, db: $this->db))->createForAllChildren($parentId, $this->routineData($childId), [1, 2]);
+            $this->fail('The second insert must fail.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertSame('Simulated second-child insert failure.', $exception->getMessage());
+        }
+        $this->assertSame(2, $model->attempts);
+        $this->assertSame(0, (new RoutineModel())->countAllResults());
+        $this->assertSame(0, (new RoutineDayModel())->countAllResults());
+    }
+
+    public function testAllChildrenCreateRouteRedirectsToListWithCount(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $payload = $this->routineData($childId);
+        $payload['child_user_id'] = 'all';
+        $payload['days'] = [1, 3];
+        $response = $this->postRoutineAsParent($parentId, '/routines', $payload);
+        $response->assertRedirectTo('/routines');
+        $this->assertSame(3, (new RoutineModel())->countAllResults());
+        $this->assertStringContainsString('3 anak aktif', session('success'));
+    }
+
+    public function testAllChildrenOptionIsOnlyOfferedWhenCreatingAndPreservesInvalidInput(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $family = (new FamilyModel())->where('name', 'Demo Family')->first();
+        $session = $this->parentSession($parentId, (int) $family['id'], 'unused', 'unused');
+        $create = $this->withSession($session)->get('/routines/new');
+        $create->assertOK();
+        $create->assertSee('Semua anak');
+        $payload = $this->routineData($childId);
+        $payload['child_user_id'] = 'all';
+        $payload['days'] = [];
+        $this->postRoutineAsParent($parentId, '/routines', $payload)->assertRedirect();
+        $this->assertSame(0, (new RoutineModel())->countAllResults());
+        $this->assertSame('all', service('session')->getFlashdata('_ci_old_input')['post']['child_user_id']);
+        // FeatureTestTrait resets the session for each request; carry flash input across the redirect.
+        $retry = $this->withSession()->get('/routines/new');
+        $retry->assertOK();
+        $this->assertStringContainsString('value="all" selected', $retry->response()->getBody());
+        $id = (new RoutineService())->create($parentId, $this->routineData($childId), [1]);
+        $edit = $this->withSession($session)->get('/routines/' . $id . '/edit');
+        $edit->assertOK();
+        $this->assertStringNotContainsString('value="all"', $edit->response()->getBody());
+    }
+
+    public function testAllChildrenCannotBeSubmittedAsAnUpdate(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $id = $service->create($parentId, $this->routineData($childId), [1]);
+        $data = $this->routineData($childId, 'Must not change');
+        $data['child_user_id'] = 'all';
+        $data['days'] = [2];
+        $this->postRoutineAsParent($parentId, '/routines/' . $id, $data)->assertRedirect();
+        $this->assertSame(1, (new RoutineModel())->countAllResults());
+        $this->assertSame('Morning Routine', (new RoutineModel())->find($id)['name']);
+        $this->assertSame([1], $service->daysForRoutine($id));
+    }
+
+    #[DataProvider('invalidChildSelections')]
+    public function testCreateRejectsInvalidChildSelection(mixed $selection): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $data = $this->routineData($childId);
+        $data['child_user_id'] = $selection;
+        $data['days'] = [1];
+        $this->postRoutineAsParent($parentId, '/routines', $data)->assertRedirect();
+        $this->assertSame(0, (new RoutineModel())->countAllResults());
+        $this->assertArrayHasKey('child_user_id', session('errors'));
+    }
+
+    public static function invalidChildSelections(): array
+    {
+        return [[''], ['0'], ['all-children'], [['all']]];
+    }
+
+    private function postRoutineAsParent(int $parentId, string $path, array $payload)
+    {
+        $family = (new \App\Services\FamilyService())->currentFamilyForUser($parentId);
+        $security = service('security');
+        $token = $security->getTokenName();
+        $hash = $security->getHash();
+
+        return $this->withSession($this->parentSession($parentId, (int) $family['id'], $token, $hash))
+            ->post($path, [$token => $hash] + $payload);
     }
 
     private function routineData(int $childId, string $name = 'Morning Routine', bool $active = true, int $sortOrder = 0): array

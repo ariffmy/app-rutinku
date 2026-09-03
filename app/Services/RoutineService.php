@@ -82,23 +82,38 @@ class RoutineService
 
         $days = $this->normalizeDays($days);
         $payload = $this->routinePayload($data, $childUserId);
-        $routines = $this->routines ?? new RoutineModel();
 
-        $this->db->transException(true)->transStart();
-        try {
-            $routineId = $routines->insert($payload, true);
-            if ($routineId === false) {
-                throw new InvalidArgumentException(implode(' ', $routines->errors()));
-            }
+        return $this->insertRoutines([$payload], $days)[0];
+    }
 
-            $this->replaceDays((int) $routineId, $days);
-            $this->db->transComplete();
-        } catch (\Throwable $exception) {
-            $this->db->transRollback();
-            throw $exception;
+    /** @return list<int> IDs of independent routines for the family's currently active children. */
+    public function createForAllChildren(int $parentUserId, array $data, array $days): array
+    {
+        $families = $this->families ?? new FamilyService();
+        $family = $families->currentFamilyForUser($parentUserId);
+        if ($family === null) {
+            throw new AuthorizationException('Parent must belong to one family.');
         }
 
-        return (int) $routineId;
+        $authorization = $this->authorization ?? new FamilyAuthorizationService();
+        $payloads = [];
+        foreach ($families->children((int) $family['id']) as $child) {
+            if (! $child['is_active']) {
+                continue;
+            }
+
+            $childUserId = (int) $child['id'];
+            if (! $authorization->parentCanManageChild($parentUserId, $childUserId)) {
+                throw new AuthorizationException('Parent cannot create a routine for this Child.');
+            }
+            $payloads[] = $this->routinePayload($data, $childUserId);
+        }
+
+        if ($payloads === []) {
+            throw new InvalidArgumentException('Tiada anak aktif. Tambah atau aktifkan anak dahulu.');
+        }
+
+        return $this->insertRoutines($payloads, $this->normalizeDays($days));
     }
 
     public function update(int $parentUserId, int $routineId, array $data, array $days): void
@@ -235,6 +250,31 @@ class RoutineService
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageRoutine($parentUserId, $routineId)) {
             throw new AuthorizationException('Parent cannot manage this routine.');
         }
+    }
+
+    /** Save every child and schedule together, or roll back the entire operation. */
+    private function insertRoutines(array $payloads, array $days): array
+    {
+        $routines = $this->routines ?? new RoutineModel();
+        $routineIds = [];
+        $this->db->transException(true)->transStart();
+        try {
+            foreach ($payloads as $payload) {
+                $routineId = $routines->insert($payload, true);
+                if ($routineId === false) {
+                    throw new InvalidArgumentException(implode(' ', $routines->errors()));
+                }
+
+                $this->replaceDays((int) $routineId, $days);
+                $routineIds[] = (int) $routineId;
+            }
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return $routineIds;
     }
 
     private function replaceDays(int $routineId, array $days): void

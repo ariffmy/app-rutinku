@@ -46,14 +46,26 @@ class RoutineController extends BaseController
 
     public function create()
     {
-        if (! $this->validate($this->routineRules())) {
+        if (! $this->validate($this->routineRules(allowAllChildren: true))) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
         $parent = (new AuthService())->currentUser();
 
         try {
-            $routineId = (new RoutineService())->create(
+            $service = new RoutineService();
+            if ($this->request->getPost('child_user_id') === 'all') {
+                $routineIds = $service->createForAllChildren(
+                    (int) $parent->id,
+                    $this->routineInput(),
+                    (array) $this->request->getPost('days'),
+                );
+
+                return redirect()->to(route_to('parent.routines'))->with('success',
+                    'Routine telah dicipta untuk ' . count($routineIds) . ' anak aktif. Buka setiap routine untuk tambah task; setiap salinan diurus berasingan.');
+            }
+
+            $routineId = $service->create(
                 (int) $parent->id,
                 $this->routineInput(),
                 (array) $this->request->getPost('days'),
@@ -137,10 +149,12 @@ class RoutineController extends BaseController
         ));
     }
 
-    private function routineRules(): array
+    private function routineRules(bool $allowAllChildren = false): array
     {
         return [
-            'child_user_id' => 'required|is_natural_no_zero',
+            'child_user_id' => $allowAllChildren && $this->request->getPost('child_user_id') === 'all'
+                ? 'required|in_list[all]'
+                : 'required|is_natural_no_zero',
             'name' => 'required|max_length[120]',
             'description' => 'permit_empty|max_length[5000]',
             'type' => 'permit_empty|max_length[50]',
