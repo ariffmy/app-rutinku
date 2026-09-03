@@ -5,7 +5,7 @@ Phase 8 implements calculated, Parent-only daily, weekly, and monthly rankings w
 - Daily periods use the Kuala Lumpur calendar date.
 - Weekly periods are Monday–Sunday; monthly periods use calendar months.
 - Current periods calculate scheduled/completed metrics only through today, avoiding future-task dilution.
-- Score uses earned `task` and `bonus` ledger rows. Reward, adjustment, and reversal rows are excluded exactly as specified.
+- Score uses uncancelled `task` and `bonus` ledger awards. A linked reversal removes the original award from the score; reward spending and manual adjustments are excluded. Completing a task again after undo counts only the new, uncancelled award.
 - Tie-breakers are earned points, completion percentage, perfect days, current streak, then name ascending.
 - Ranking eligibility is applied before calculation.
 - Child routes expose no ranking or sibling data.

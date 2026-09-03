@@ -42,7 +42,7 @@ class TaskCompletionService
         $this->db->transException(true)->transStart();
         try {
             $this->lockChild($childUserId);
-            $task = $this->eligibleTask($childUserId, $routineTaskId, (int) $local->format('N'));
+            $task = $this->eligibleTask($childUserId, $routineTaskId, $local);
             $completions = $this->completions ?? new TaskCompletionModel();
 
             if ($completions
@@ -186,7 +186,7 @@ class TaskCompletionService
         return $schedule;
     }
 
-    private function eligibleTask(int $childUserId, int $routineTaskId, int $weekday): array
+    private function eligibleTask(int $childUserId, int $routineTaskId, \DateTimeInterface $date): array
     {
         $task = ($this->routineTasks ?? new RoutineTaskModel())->find($routineTaskId);
         if ($task === null || ! (bool) $task['is_active']) {
@@ -200,9 +200,8 @@ class TaskCompletionService
 
         $scheduled = ($this->routineDays ?? new RoutineDayModel())
             ->where('routine_id', (int) $routine['id'])
-            ->where('day_of_week', $weekday)
-            ->first();
-        if ($scheduled === null) {
+            ->findAll();
+        if (! (new TaskScheduleService())->isScheduled($task, $date, array_column($scheduled, 'day_of_week'))) {
             throw new TaskCompletionException('Tugasan ini tidak dijadualkan hari ini.');
         }
 

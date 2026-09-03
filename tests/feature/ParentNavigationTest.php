@@ -50,6 +50,15 @@ final class ParentNavigationTest extends CIUnitTestCase
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
         $xpath = new DOMXPath($document);
+        if ($path === '/dashboard') {
+            $buttons = $xpath->query('//main//a[contains(concat(" ", normalize-space(@class), " "), " btn ")]');
+            $this->assertGreaterThanOrEqual(3, $buttons->length);
+            foreach ($buttons as $button) {
+                $this->assertStringContainsString(' btn-primary ', ' ' . $button->getAttribute('class') . ' ');
+                $this->assertStringNotContainsString('btn-outline', $button->getAttribute('class'));
+                $this->assertStringNotContainsString('btn-sm', $button->getAttribute('class'));
+            }
+        }
 
         $this->assertSame(1, $xpath->query('//nav[@aria-label="Navigasi Ibu bapa"]')->length);
         $this->assertSame(1, $xpath->query('//button[@data-parent-menu-toggle][@aria-controls="parent-nav-panel"][@aria-expanded="false"][@hidden]')->length);
@@ -94,8 +103,46 @@ final class ParentNavigationTest extends CIUnitTestCase
     public function testUpdatedNavigationAssetsUseNewPwaCacheVersion(): void
     {
         $worker = file_get_contents(ROOTPATH . 'public/service-worker.js');
-        $this->assertStringContainsString('rutinku-static-v4', $worker);
+        $this->assertStringContainsString('rutinku-static-v10', $worker);
         $this->assertStringContainsString('/assets/css/app.css', $worker);
         $this->assertStringContainsString('/assets/js/app.js', $worker);
+    }
+
+    public function testSharedGoldenThemeAcrossAppShells(): void
+    {
+        $css = file_get_contents(ROOTPATH . 'public/assets/css/app.css');
+        $this->assertStringContainsString('--rutinku-primary: #ffbc0b', $css);
+        $css = file_get_contents(ROOTPATH . 'public/assets/css/buttons.css');
+        $this->assertStringContainsString('--bs-btn-color: #302300', $css);
+        $this->assertStringContainsString('--bs-btn-hover-bg: #e9aa00', $css);
+        $this->assertStringContainsString('--bs-btn-disabled-bg: #d5dce7', $css);
+        foreach (['layouts/parent.php', 'layouts/child.php', 'auth/login.php', 'child/device_setup_required.php'] as $file) {
+            $html = file_get_contents(APPPATH . 'Views/' . $file);
+            $this->assertStringContainsString('content="#ffbc0b"', $html);
+            $this->assertStringContainsString('assets/css/app.css', $html);
+            $this->assertStringContainsString('assets/css/buttons.css', $html);
+        }
+        $manifest = json_decode(file_get_contents(ROOTPATH . 'public/manifest.webmanifest'), true);
+        $this->assertSame('#ffbc0b', $manifest['theme_color']);
+    }
+
+    public function testButtonGeometryHasOneSharedDefinition(): void
+    {
+        $buttons = file_get_contents(ROOTPATH . 'public/assets/css/buttons.css');
+        foreach (['min-height: 50px', 'display: inline-flex', 'align-items: center', 'justify-content: center', '--bs-btn-font-size: 1rem', '--bs-btn-border-radius: 30px'] as $rule) {
+            $this->assertStringContainsString($rule, $buttons);
+        }
+        $this->assertStringNotContainsString('.task-save .btn', file_get_contents(ROOTPATH . 'public/assets/css/task-form.css'));
+        $this->assertStringContainsString('/assets/css/buttons.css', file_get_contents(ROOTPATH . 'public/service-worker.js'));
+        $this->assertStringContainsString('/assets/css/buttons.css', file_get_contents(ROOTPATH . 'public/offline.html'));
+    }
+
+    public function testTaskEditorUsesFullParentContainerWidth(): void
+    {
+        $css = file_get_contents(ROOTPATH . 'public/assets/css/task-form.css');
+        $this->assertStringContainsString('.task-editor{width:100%;max-width:none;margin:0}', $css);
+        $this->assertStringNotContainsString('max-width:620px', $css);
+        $this->assertStringContainsString("extend('layouts/parent')", file_get_contents(APPPATH . 'Views/parent/routine_tasks/form.php'));
+        $this->assertStringContainsString("extend('layouts/parent')", file_get_contents(APPPATH . 'Views/parent/routines/form.php'));
     }
 }

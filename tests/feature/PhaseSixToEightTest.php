@@ -223,7 +223,7 @@ final class PhaseSixToEightTest extends CIUnitTestCase
         $this->assertNotSame($childTwoId, (int) $redemption['child_user_id']);
     }
 
-    public function testRankingUsesEarnedPointsNotBalanceAndExcludesRewardAdjustmentAndReversal(): void
+    public function testRankingUsesUncancelledAwardsAndExcludesRewardSpendingAndAdjustments(): void
     {
         [$parentId, $childOneId, $childTwoId] = $this->demoIds(true);
         $today = $this->today();
@@ -251,7 +251,9 @@ final class PhaseSixToEightTest extends CIUnitTestCase
         $completions->undoTask($childOneId, $taskOne, $today);
         $afterUndo = (new RankingService())->daily($parentId, $today);
         $childOneRow = array_values(array_filter($afterUndo['rows'], static fn (array $row): bool => $row['child_user_id'] === $childOneId))[0];
-        $this->assertSame(10, $childOneRow['earned_points']);
+        $this->assertSame(0, $childOneRow['earned_points']);
+        $this->assertSame($childTwoId, $afterUndo['rows'][0]['child_user_id']);
+        $this->assertSame(5, $afterUndo['rows'][0]['earned_points']);
     }
 
     public function testRankingTieBreakersAndPeriodBoundariesAreDeterministic(): void

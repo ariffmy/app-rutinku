@@ -22,7 +22,7 @@
                         <td><?= esc($redemption['reward_title']) ?></td>
                         <td><?= esc($redemption['points_used']) ?></td>
                         <td><span class="badge text-bg-<?= $badge ?>"><?= esc(ui_label('redemption', $redemption['status'])) ?></span></td>
-                        <td><?= esc($redemption['requested_at']) ?></td>
+                        <td><?= esc(ui_datetime($redemption['requested_at'])) ?></td>
                         <td class="text-end">
                             <?php if ($redemption['status'] === 'pending'): ?>
                                 <div class="d-inline-flex gap-2">

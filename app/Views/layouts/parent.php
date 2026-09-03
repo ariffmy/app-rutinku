@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#345995">
+    <meta name="theme-color" content="#ffbc0b">
     <meta name="application-name" content="RutinKu">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -13,6 +13,7 @@
     <link rel="apple-touch-icon" href="<?= base_url('assets/icons/apple-touch-icon.png') ?>">
     <link href="<?= base_url('assets/vendor/bootstrap-5.3.3.min.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/app.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/buttons.css') ?>" rel="stylesheet">
 </head>
 <body class="parent-shell">
 <?php
@@ -60,5 +61,6 @@ $navigation = [
     <?= $this->renderSection('content') ?>
 </main>
 <script defer src="<?= base_url('assets/js/app.js') ?>" data-service-worker-url="<?= base_url('service-worker.js') ?>"></script>
+<?= $this->renderSection('scripts') ?>
 </body>
 </html>

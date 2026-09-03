@@ -125,7 +125,7 @@ class RoutineService
         }
 
         $days = $this->normalizeDays($days);
-        $payload = $this->routinePayload($data, $childUserId);
+        $payload = $this->routinePayload($data + ['start_time' => $routine['start_time']], $childUserId);
         $routines = $this->routines ?? new RoutineModel();
 
         $this->db->transException(true)->transStart();
@@ -193,12 +193,66 @@ class RoutineService
         return (int) $taskId;
     }
 
+    /** Copy independently to active children; never assign outside the parent's family. */
+    public function createTaskForAllChildren(int $parentUserId, int $routineId, array $data): array
+    {
+        $source = $this->getForParent($parentUserId, $routineId);
+        $families = $this->families ?? new FamilyService();
+        $family = $families->currentFamilyForUser($parentUserId);
+        if ($family === null) {
+            throw new AuthorizationException('Keluarga tidak ditemui.');
+        }
+        $children = array_filter($families->children((int) $family['id']), static fn (array $child): bool => (bool) $child['is_active']);
+        if ($children === []) {
+            throw new InvalidArgumentException('Tiada anak aktif.');
+        }
+        $payload = $this->taskPayload($data, $routineId);
+        $routines = $this->routines ?? new RoutineModel();
+        $tasks = $this->routineTasks ?? new RoutineTaskModel();
+        $ids = [];
+        $this->db->transException(true)->transStart();
+        try {
+            foreach ($children as $child) {
+                $childId = (int) $child['id'];
+                if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childId)) {
+                    throw new AuthorizationException('Anak bukan ahli keluarga ini.');
+                }
+                $matches = $childId === (int) $source['child_user_id'] ? [$source]
+                    : $routines->where('child_user_id', $childId)->where('name', $source['name'])->findAll(2);
+                if (count($matches) > 1 || ($matches !== [] && ! $matches[0]['is_active'])) {
+                    throw new InvalidArgumentException('Pastikan setiap anak mempunyai hanya satu rutin aktif bernama ' . $source['name'] . '.');
+                }
+                if ($matches === []) {
+                    $targetId = $routines->insert($this->routinePayload($source, $childId), true);
+                    if ($targetId === false) {
+                        throw new InvalidArgumentException(implode(' ', $routines->errors()));
+                    }
+                    $this->replaceDays((int) $targetId, $source['days']);
+                } else {
+                    $targetId = (int) $matches[0]['id'];
+                }
+                (new TaskScheduleService())->assertWithinRoutine($payload, $this->daysForRoutine((int) $targetId));
+                $taskId = $tasks->insert(array_replace($payload, ['routine_id' => (int) $targetId]), true);
+                if ($taskId === false) {
+                    throw new InvalidArgumentException(implode(' ', $tasks->errors()));
+                }
+                $ids[] = (int) $taskId;
+            }
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return $ids;
+    }
+
     public function updateTask(int $parentUserId, int $taskId, array $data): int
     {
         $task = $this->getTaskForParent($parentUserId, $taskId);
         $tasks = $this->routineTasks ?? new RoutineTaskModel();
 
-        if (! $tasks->update($taskId, $this->taskPayload($data, (int) $task['routine_id']))) {
+        if (! $tasks->update($taskId, $this->taskPayload(array_replace($task, $data), (int) $task['routine_id']))) {
             throw new InvalidArgumentException(implode(' ', $tasks->errors()));
         }
 
@@ -316,6 +370,8 @@ class RoutineService
 
     private function taskPayload(array $data, int $routineId): array
     {
+        $schedule = (new TaskScheduleService())->payload($data);
+        (new TaskScheduleService())->assertWithinRoutine($schedule, $this->daysForRoutine($routineId));
         return [
             'routine_id' => $routineId,
             'title' => trim((string) ($data['title'] ?? '')),
@@ -325,7 +381,7 @@ class RoutineService
             'is_required' => ! empty($data['is_required']) ? 1 : 0,
             'sort_order' => (int) ($data['sort_order'] ?? 0),
             'is_active' => ! empty($data['is_active']) ? 1 : 0,
-        ];
+        ] + $schedule;
     }
 
     private function normalizeNullable(mixed $value): ?string

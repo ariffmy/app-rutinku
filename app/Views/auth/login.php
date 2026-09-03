@@ -3,10 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#345995">
+    <meta name="theme-color" content="#ffbc0b">
     <title><?= esc($title) ?> · RutinKu</title>
     <link href="<?= base_url('assets/vendor/bootstrap-5.3.3.min.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/app.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/css/buttons.css') ?>" rel="stylesheet">
 </head>
 <body class="auth-shell d-flex align-items-center min-vh-100 py-4">
 <main class="container">

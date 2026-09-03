@@ -320,6 +320,15 @@ class PointService
                 PointTransactionType::TASK->value,
                 PointTransactionType::BONUS->value,
             ])
+            // Undo keeps the original award in the append-only ledger. Do not
+            // count cancelled awards again when a task is completed a second time.
+            ->whereNotIn('id', static function (\CodeIgniter\Database\BaseBuilder $builder) use ($childUserId) {
+                return $builder->select('reference_id')->from('point_transactions')
+                    ->where('child_user_id', $childUserId)
+                    ->where('type', PointTransactionType::REVERSAL->value)
+                    ->where('reference_type', 'point_transaction')
+                    ->where('reference_id !=', null);
+            })
             ->where('transaction_date >=', $startDate)
             ->where('transaction_date <=', $endDate)
             ->first();

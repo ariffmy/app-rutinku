@@ -26,7 +26,7 @@
             <section aria-labelledby="routine-<?= esc($routine['id']) ?>">
                 <div class="d-flex justify-content-between align-items-baseline mb-2 px-1">
                     <h2 id="routine-<?= esc($routine['id']) ?>" class="h4 mb-0"><?= esc($routine['name']) ?></h2>
-                    <?php if ($routine['start_time']): ?><span class="small text-secondary"><?= esc(substr($routine['start_time'], 0, 5)) ?></span><?php endif ?>
+                    <?php if ($routine['start_time']): ?><span class="small text-secondary"><?= esc(ui_time($routine['start_time'])) ?></span><?php endif ?>
                 </div>
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
                     <div class="list-group list-group-flush">
@@ -41,7 +41,7 @@
                                 <div class="flex-grow-1">
                                     <div class="fw-semibold"><?= esc($task['title']) ?></div>
                                     <div class="small text-secondary">
-                                        <?= $task['task_time'] ? esc(substr($task['task_time'], 0, 5)) : 'Bila-bila masa' ?>
+                                        <?= esc(ui_task_time($task)) ?>
                                         <?php if (! $task['is_required']): ?> · Pilihan<?php endif ?>
                                     </div>
                                 </div>

@@ -1,10 +1,13 @@
-const STATIC_CACHE = 'rutinku-static-v4';
+const STATIC_CACHE = 'rutinku-static-v10';
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',
   '/assets/vendor/bootstrap-5.3.3.min.css',
   '/assets/css/app.css',
+  '/assets/css/buttons.css',
   '/assets/js/app.js',
+  '/assets/js/task-form.js',
+  '/assets/css/task-form.css',
   '/assets/icons/icon-192.png',
   '/assets/icons/icon-512.png',
   '/assets/icons/apple-touch-icon.png'

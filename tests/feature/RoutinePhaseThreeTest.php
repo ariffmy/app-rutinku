@@ -246,10 +246,46 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
         $editRoutine = $this->withSession($session)->get('/routines/' . $routineId . '/edit');
         $editRoutine->assertOK();
         $editRoutine->assertSee('Rendered Task');
+        $editRoutine->assertDontSee('Masa mula');
+        $newRoutine = $this->withSession($session)->get('/routines/new');
+        $newRoutine->assertOK();
+        $newRoutine->assertDontSee('Masa mula');
 
         $editTask = $this->withSession($session)->get('/routine-tasks/' . $taskId . '/edit');
         $editTask->assertOK();
         $editTask->assertSee('Tugasan untuk Rendered Routine');
+        $editTask->assertSee('Masa mula (pilihan)');
+    }
+
+    public function testRoutineFormWithoutStartTimePreservesExistingValue(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $data = $this->routineData($childId);
+        $routineId = $service->create($parentId, $data, [1]);
+        unset($data['start_time']);
+        $response = $this->postRoutineAsParent($parentId, '/routines/' . $routineId, $data + ['days' => [1]]);
+        $response->assertRedirect();
+        $this->assertSame('07:00:00', (new RoutineModel())->find($routineId)['start_time']);
+        $newId = $service->create($parentId, $data, [1]);
+        $this->assertNull((new RoutineModel())->find($newId)['start_time']);
+    }
+
+    public function testMalayTimeSelectionSavesCanonicalTimeWithoutJavascript(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $routineId = (new RoutineService())->create($parentId, $this->routineData($childId), [1]);
+        $data = $this->taskData('Masa Malaysia', 10);
+        unset($data['task_time']);
+        $response = $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $routineId), $data + ['task_hour' => '20', 'task_minute' => '05']);
+        $response->assertRedirect();
+        $this->assertSame('20:05:00', (new RoutineTaskModel())->first()['task_time']);
+        $response = $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $routineId), $data + ['task_hour' => '', 'task_minute' => '00']);
+        $response->assertRedirect();
+        $this->assertNull((new RoutineTaskModel())->orderBy('id', 'DESC')->first()['task_time']);
+        $response = $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $routineId), $data + ['task_hour' => '24', 'task_minute' => '00']);
+        $response->assertRedirect();
+        $this->assertSame(2, (new RoutineTaskModel())->countAllResults());
     }
 
     public function testCompletionRoutesRemainAvailableAndRankingIsParentGetOnly(): void
@@ -419,6 +455,82 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
     public static function invalidChildSelections(): array
     {
         return [[''], ['0'], ['all-children'], [['all']]];
+    }
+
+    public function testScheduledTasksWithinRoutineDaysAndRejectWrongDayCompletion(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $routine = $service->create($parentId, $this->routineData($childId), [1, 4]);
+        $task = $service->createTask($parentId, $routine, $this->taskData('Sekali sahaja', 10) + ['schedule_type' => 'once', 'start_date' => '2026-09-03', 'duration_minutes' => 30]);
+        $at = new DateTimeImmutable('2026-09-03 09:00:00', new DateTimeZone('Asia/Kuala_Lumpur'));
+        $this->assertSame(1, (new TodayTaskResolver())->resolve($childId, $at)['task_count']);
+        $this->assertSame(0, (new TodayTaskResolver())->resolve($childId, $at->modify('+1 day'))['task_count']);
+        (new \App\Services\TaskCompletionService())->completeTask($childId, $task, $at);
+        $service->updateTask($parentId, $task, $this->taskData('Nama baharu', 10));
+        $saved = (new RoutineTaskModel())->find($task);
+        $this->assertSame('once', $saved['schedule_type']);
+        $this->assertSame(30, (int) $saved['duration_minutes']);
+        $this->expectException(\App\Exceptions\TaskCompletionException::class);
+        (new \App\Services\TaskCompletionService())->completeTask($childId, $task, $at->modify('+1 day'));
+    }
+
+    public function testTaskForAllChildrenCopiesRoutineAndKeepsTasksIndependent(): void
+    {
+        [$parentId, $childId, $childTwo] = $this->demoIds(true);
+        $service = new RoutineService();
+        $source = $service->create($parentId, $this->routineData($childId), [1, 4]);
+        $existing = $service->create($parentId, $this->routineData($childTwo), [2]);
+        $ids = $service->createTaskForAllChildren($parentId, $source, $this->taskData('Baca buku', 10) + ['schedule_type' => 'daily', 'start_date' => '2026-09-03']);
+        $this->assertCount(3, $ids);
+        $this->assertSame(3, (new RoutineModel())->countAllResults());
+        $this->assertSame([2], $service->daysForRoutine($existing));
+        $service->updateTask($parentId, $ids[0], $this->taskData('Tukar satu', 20));
+        $this->assertSame('Baca buku', (new RoutineTaskModel())->find($ids[1])['title']);
+    }
+
+    public function testTaskForAllChildrenRollsBackOnAmbiguousRoutine(): void
+    {
+        [$parentId, $childId, $childTwo] = $this->demoIds(true);
+        $service = new RoutineService();
+        $source = $service->create($parentId, $this->routineData($childId), [1]);
+        $service->create($parentId, $this->routineData($childTwo), [1]);
+        $service->create($parentId, $this->routineData($childTwo), [1]);
+        try {
+            $service->createTaskForAllChildren($parentId, $source, $this->taskData('Tidak separuh', 10));
+            $this->fail('Ambiguous routine must reject the entire batch.');
+        } catch (InvalidArgumentException) {
+            $this->assertSame(0, (new RoutineTaskModel())->countAllResults());
+            $this->assertSame(3, (new RoutineModel())->countAllResults());
+        }
+    }
+
+    public function testAllChildrenTasksSkipInactiveChildrenAndRejectOutsideParent(): void
+    {
+        [$parentId, $childId, $childTwo] = $this->demoIds(true);
+        $service = new RoutineService();
+        $source = $service->create($parentId, $this->routineData($childId), [1]);
+        (new UserModel())->update($childTwo, ['is_active' => 0]);
+        $ids = $service->createTaskForAllChildren($parentId, $source, $this->taskData('Aktif sahaja', 10));
+        $this->assertCount(2, $ids);
+        $this->assertSame(0, (new RoutineModel())->where('child_user_id', $childTwo)->countAllResults());
+        $outside = $this->createOutsideFamilyParent();
+        try {
+            $service->createTaskForAllChildren($outside, $source, $this->taskData('Tidak dibenarkan', 10));
+            $this->fail('Outside parent must not copy tasks.');
+        } catch (AuthorizationException) {
+            $this->assertSame(2, (new RoutineTaskModel())->countAllResults());
+        }
+    }
+
+    public function testParentCanSubmitAllChildrenTaskForm(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $source = (new RoutineService())->create($parentId, $this->routineData($childId), [1]);
+        $response = $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $source), $this->taskData('Baca buku', 10) + ['assign_to' => 'all', 'schedule_type' => 'weekly', 'start_date' => '2026-09-03', 'repeat_days' => [2, 4], 'duration_minutes' => 15]);
+        $response->assertRedirect();
+        $this->assertSame(3, (new RoutineTaskModel())->countAllResults());
+        $this->assertSame('2,4', (new RoutineTaskModel())->first()['repeat_days']);
     }
 
     private function postRoutineAsParent(int $parentId, string $path, array $payload)

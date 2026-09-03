@@ -191,7 +191,7 @@ final class PointPhaseFiveTest extends CIUnitTestCase
         $points->manualAdjustment($outsideParent, $childId, 100, 'Tamper', $this->monday());
     }
 
-    public function testEarnedPointsExcludeAdjustmentRewardAndReversalTypes(): void
+    public function testEarnedPointsExcludeAdjustmentsAndCancelledAwards(): void
     {
         [$parentId, $childId] = $this->demoIds();
         [$taskId, $monday] = $this->scheduledTask($parentId, $childId, 10);
@@ -202,8 +202,72 @@ final class PointPhaseFiveTest extends CIUnitTestCase
 
         $this->assertSame(10, $points->getEarnedPointsBetween($childId, $monday, $monday));
         $completions->undoTask($childId, $taskId, $monday);
-        $this->assertSame(10, $points->getEarnedPointsBetween($childId, $monday, $monday));
+        $this->assertSame(0, $points->getEarnedPointsBetween($childId, $monday, $monday));
         $this->assertSame(99, $points->getBalance($childId));
+    }
+
+    public function testRepeatedCompleteUndoCannotIncreaseBalanceOrEarnedScore(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        [$taskId, $at] = $this->scheduledTask($parentId, $childId, 10);
+        $service = new TaskCompletionService();
+        $points = new PointService();
+        for ($cycle = 0; $cycle < 5; $cycle++) {
+            $service->completeTask($childId, $taskId, $at);
+            $this->assertSame(10, $points->getBalance($childId));
+            $this->assertSame(10, $points->getEarnedPointsBetween($childId, $at, $at));
+            $service->undoTask($childId, $taskId, $at);
+            $this->assertSame(0, $points->getBalance($childId));
+            $this->assertSame(0, $points->getEarnedPointsBetween($childId, $at, $at));
+        }
+        $this->assertSame(10, (new PointTransactionModel())->countAllResults());
+    }
+
+    public function testRankingAndReportsUseOnlyUncancelledTaskAwards(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        [$taskId] = $this->scheduledTask($parentId, $childId, 10);
+        $at = new DateTimeImmutable('2020-01-06 08:00:00', new DateTimeZone(app_timezone()));
+        $service = new TaskCompletionService();
+        $service->completeTask($childId, $taskId, $at);
+        $service->undoTask($childId, $taskId, $at);
+        $service->completeTask($childId, $taskId, $at);
+        foreach (['daily', 'weekly', 'monthly'] as $period) {
+            $ranking = (new \App\Services\RankingService())->{$period}($parentId, $at);
+            $row = array_values(array_filter($ranking['rows'], static fn ($row) => (int) $row['child_user_id'] === $childId));
+            $this->assertSame(10, $row[0]['earned_points']);
+            $report = (new \App\Services\ReportService())->{$period}($parentId, $at);
+            $this->assertSame(10, $report['total_earned_points']);
+        }
+    }
+
+    public function testTrustedChildRoutesKeepOneTasksPointsAcrossRepeatedToggles(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        [$taskId] = $this->scheduledTask($parentId, $childId, 10);
+        $now = new DateTimeImmutable('now', new DateTimeZone(app_timezone()));
+        $weekday = (int) $now->format('N');
+        if ($weekday !== 1) {
+            $task = (new \App\Models\RoutineTaskModel())->find($taskId);
+            (new \App\Models\RoutineDayModel())->insert(['routine_id' => $task['routine_id'], 'day_of_week' => $weekday]);
+        }
+        $device = (new ChildDeviceService())->provision($parentId, $childId);
+        $points = new PointService();
+        for ($cycle = 0; $cycle < 3; $cycle++) {
+            foreach (['complete' => 10, 'undo' => 0] as $action => $expected) {
+                service('superglobals')->setCookie(ChildDeviceService::requestCookieName(), $device->rawToken);
+                $security = service('security');
+                $token = $security->getTokenName();
+                $hash = $security->getHash();
+                $this->withSession([$token => $hash])->post('/child/tasks/' . $taskId . '/' . $action, [$token => $hash])
+                    ->assertRedirectTo('/child/today');
+                $this->assertSame($expected, $points->getBalance($childId));
+                $this->assertSame($expected, $points->getEarnedPointsBetween($childId, $now, $now));
+                $page = $this->get('/child/today');
+                $page->assertOK();
+                $page->assertSee($expected . ' mata');
+            }
+        }
     }
 
     public function testPointLedgerModelRejectsUpdateAndDelete(): void

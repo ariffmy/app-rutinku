@@ -15,6 +15,10 @@ class RoutineTaskModel extends Model
         'title',
         'description',
         'task_time',
+        'duration_minutes',
+        'schedule_type',
+        'start_date',
+        'repeat_days',
         'points',
         'is_required',
         'sort_order',
@@ -28,6 +32,10 @@ class RoutineTaskModel extends Model
         'points' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[10000]',
         'is_required' => 'required|in_list[0,1]',
         'sort_order' => 'required|integer|greater_than_equal_to[0]',
+        'duration_minutes' => 'permit_empty|integer|greater_than_equal_to[1]|less_than_equal_to[1440]',
+        'schedule_type' => 'permit_empty|in_list[inherit,once,weekly,monthly,daily]',
+        'start_date' => 'permit_empty|valid_date[Y-m-d]',
+        'repeat_days' => 'permit_empty|max_length[20]',
         'is_active' => 'required|in_list[0,1]',
     ];
 }

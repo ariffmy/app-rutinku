@@ -32,22 +32,9 @@ class TodayTaskResolver
             ->setTimezone(new DateTimeZone(app_timezone()));
         $weekday = (int) $localDate->format('N');
 
-        $scheduledRoutineIds = array_column(
-            ($this->routineDays ?? new RoutineDayModel())
-                ->select('routine_id')
-                ->where('day_of_week', $weekday)
-                ->findAll(),
-            'routine_id',
-        );
-
-        if ($scheduledRoutineIds === []) {
-            return $this->emptyResult($localDate);
-        }
-
         $routines = ($this->routines ?? new RoutineModel())
             ->where('child_user_id', $childUserId)
             ->where('is_active', true)
-            ->whereIn('id', array_map('intval', $scheduledRoutineIds))
             ->orderBy('sort_order', 'ASC')
             ->orderBy('start_time', 'ASC')
             ->orderBy('id', 'ASC')
@@ -57,7 +44,7 @@ class TodayTaskResolver
         $requiredTaskCount = 0;
         $availablePoints = 0;
 
-        foreach ($routines as &$routine) {
+        foreach ($routines as $index => &$routine) {
             $tasks = ($this->routineTasks ?? new RoutineTaskModel())
                 ->where('routine_id', (int) $routine['id'])
                 ->where('is_active', true)
@@ -66,6 +53,12 @@ class TodayTaskResolver
                 ->orderBy('id', 'ASC')
                 ->findAll();
 
+            $days = array_column(($this->routineDays ?? new RoutineDayModel())->where('routine_id', (int) $routine['id'])->findAll(), 'day_of_week');
+            $tasks = array_values(array_filter($tasks, static fn (array $task): bool => (new TaskScheduleService())->isScheduled($task, $localDate, $days)));
+            if ($tasks === [] && ! in_array($weekday, array_map('intval', $days), true)) {
+                unset($routines[$index]);
+                continue;
+            }
             $routine['tasks'] = $tasks;
             $taskCount += count($tasks);
             $requiredTaskCount += count(array_filter($tasks, static fn (array $task): bool => (bool) $task['is_required']));
@@ -75,7 +68,7 @@ class TodayTaskResolver
         return [
             'date' => $localDate->format('Y-m-d'),
             'weekday' => $weekday,
-            'routines' => $routines,
+            'routines' => array_values($routines),
             'task_count' => $taskCount,
             'required_task_count' => $requiredTaskCount,
             'available_points' => $availablePoints,

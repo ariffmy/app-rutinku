@@ -11,7 +11,7 @@ Phase 5 makes `point_transactions` the source of truth for every point balance. 
 - `PointTransactionType`, append-only `PointTransactionModel`, `PointException`, and `PointService`.
 - Ledger-derived balance and chronological account history.
 - Task award and reversal methods that use completion snapshots and stable polymorphic references.
-- Earned-points calculation that follows the ranking contract: include task/bonus rows and exclude reward, adjustment, and reversal rows.
+- Earned points include only task/bonus awards that have not been cancelled by a linked reversal. Reward spending and manual adjustments do not affect this score. Repeated complete/undo cycles cannot accumulate earned points; the original ledger history remains intact.
 - Parent-only points screen with same-family Child selection, signed manual adjustments, mandatory reason, CSRF, and audit logs.
 - Trusted Child Today balance and Progress balance/history with no sibling data.
 - Transaction rollback tests proving a completion cannot exist without its award and an undo cannot succeed without its reversal.

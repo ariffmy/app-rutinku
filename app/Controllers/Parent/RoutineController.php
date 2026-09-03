@@ -167,14 +167,18 @@ class RoutineController extends BaseController
 
     private function routineInput(): array
     {
-        return [
+        $data = [
             'child_user_id' => $this->request->getPost('child_user_id'),
             'name' => $this->request->getPost('name'),
             'description' => $this->request->getPost('description'),
             'type' => $this->request->getPost('type'),
-            'start_time' => $this->request->getPost('start_time'),
             'sort_order' => $this->request->getPost('sort_order'),
             'is_active' => $this->request->getPost('is_active'),
         ];
+        if ($this->request->getPost('start_time') !== null) {
+            $data['start_time'] = $this->request->getPost('start_time');
+        }
+
+        return $data;
     }
 }

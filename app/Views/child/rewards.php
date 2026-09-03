@@ -32,7 +32,7 @@
 <?php if ($catalogue['redemptions'] !== []): ?>
     <section class="mt-4" aria-labelledby="request-history-heading"><h2 id="request-history-heading" class="h4 mb-3">Permohonan saya</h2><div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="list-group list-group-flush">
         <?php foreach ($catalogue['redemptions'] as $redemption): ?>
-            <div class="list-group-item d-flex justify-content-between gap-3 p-3"><div><div class="fw-semibold"><?= esc($redemption['reward_title']) ?></div><div class="small text-secondary"><?= esc($redemption['requested_at']) ?></div></div><span class="badge align-self-start <?= $redemption['status'] === 'approved' ? 'text-bg-success' : ($redemption['status'] === 'rejected' ? 'text-bg-danger' : 'text-bg-warning') ?>"><?= esc(ui_label('redemption', $redemption['status'])) ?></span></div>
+            <div class="list-group-item d-flex justify-content-between gap-3 p-3"><div><div class="fw-semibold"><?= esc($redemption['reward_title']) ?></div><div class="small text-secondary"><?= esc(ui_datetime($redemption['requested_at'])) ?></div></div><span class="badge align-self-start <?= $redemption['status'] === 'approved' ? 'text-bg-success' : ($redemption['status'] === 'rejected' ? 'text-bg-danger' : 'text-bg-warning') ?>"><?= esc(ui_label('redemption', $redemption['status'])) ?></span></div>
         <?php endforeach ?>
     </div></div></section>
 <?php endif ?>

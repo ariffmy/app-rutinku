@@ -15,7 +15,7 @@
 </section>
 
 <section class="mb-5" aria-labelledby="family-progress-heading">
-    <div class="d-flex justify-content-between align-items-center mb-3"><h2 id="family-progress-heading" class="h4 mb-0">Kemajuan Keluarga</h2><a href="<?= route_to('parent.ranking') ?>" class="btn btn-outline-primary btn-sm">Lihat kedudukan</a></div>
+    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-3"><h2 id="family-progress-heading" class="h4 mb-0">Kemajuan Keluarga</h2><a href="<?= route_to('parent.ranking') ?>" class="btn btn-primary d-inline-flex align-items-center">Lihat kedudukan</a></div>
     <?php if ($todayRanking['rows'] === []): ?>
         <div class="card border-0 shadow-sm"><div class="card-body text-secondary">Tiada Anak yang layak untuk kedudukan hari ini.</div></div>
     <?php else: ?>
@@ -28,7 +28,7 @@
 <section aria-labelledby="children-heading">
     <div class="d-flex align-items-center justify-content-between mb-3">
         <h2 id="children-heading" class="h4 mb-0">Anak-anak</h2>
-        <div><span class="badge text-bg-light border me-2"><?= count($children) ?> ahli</span><a href="<?= route_to('parent.children') ?>" class="btn btn-outline-primary btn-sm">Urus Anak</a></div>
+        <div><span class="badge text-bg-light border me-2"><?= count($children) ?> ahli</span><a href="<?= route_to('parent.children') ?>" class="btn btn-primary d-inline-flex align-items-center">Urus Anak</a></div>
     </div>
     <div class="row g-3">
         <?php foreach ($children as $child): ?>
@@ -42,7 +42,7 @@
                                 <?= $child['is_active'] ? 'Aktif' : 'Tidak aktif' ?>
                             </span>
                             <div class="mt-2">
-                                <a href="<?= route_to('parent.child.devices', $child['id']) ?>" class="btn btn-outline-primary btn-sm">Urus peranti</a>
+                                <a href="<?= route_to('parent.child.devices', $child['id']) ?>" class="btn btn-primary d-inline-flex align-items-center">Urus peranti</a>
                             </div>
                         </div>
                     </div>

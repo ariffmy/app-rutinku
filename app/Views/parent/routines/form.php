@@ -54,21 +54,18 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                 <label for="description" class="form-label">Penerangan</label>
                 <textarea id="description" name="description" class="form-control" rows="3" maxlength="5000"><?= esc(old('description') ?? ($routine['description'] ?? '')) ?></textarea>
             </div>
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6">
                 <label for="type" class="form-label">Jenis</label>
                 <input id="type" name="type" class="form-control" maxlength="50" value="<?= esc(old('type') ?? ($routine['type'] ?? '')) ?>" placeholder="Pagi, Sekolah, Petang">
             </div>
-            <div class="col-6 col-md-4">
-                <label for="start_time" class="form-label">Masa mula</label>
-                <input id="start_time" name="start_time" type="time" class="form-control" value="<?= esc(old('start_time') ?? (! empty($routine['start_time']) ? substr($routine['start_time'], 0, 5) : '')) ?>">
-            </div>
-            <div class="col-6 col-md-4">
+            <div class="col-12 col-md-6">
                 <label for="sort_order" class="form-label">Susunan</label>
                 <input id="sort_order" name="sort_order" type="number" min="0" max="9999" class="form-control" required value="<?= esc(old('sort_order') ?? ($routine['sort_order'] ?? 0)) ?>">
             </div>
             <div class="col-12">
                 <fieldset>
-                    <legend class="form-label">Hari</legend>
+                    <legend class="form-label">Hari rutin</legend>
+                    <p class="small text-secondary">Jadual utama untuk semua tugasan dalam rutin ini. Tugasan tidak akan muncul di luar hari yang dipilih.</p>
                     <div class="d-flex flex-wrap gap-2">
                         <?php foreach ($dayNames as $day => $label): ?>
                             <input class="btn-check" type="checkbox" name="days[]" value="<?= $day ?>" id="day-<?= $day ?>" <?= in_array($day, array_map('intval', $selectedDays), true) ? 'checked' : '' ?>>
@@ -94,7 +91,7 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
 <?php if ($routine): ?>
     <section aria-labelledby="tasks-heading">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div><h2 id="tasks-heading" class="h4 mb-1">Tugasan</h2><p class="small text-secondary mb-0">Tugasan aktif akan muncul pada hari rutin dijadualkan.</p></div>
+            <div><h2 id="tasks-heading" class="h4 mb-1">Tugasan</h2><p class="small text-secondary mb-0">Semua tugasan mengikut hari rutin. Jadual khas hanya mengehadkan hari tersebut.</p></div>
             <a href="<?= route_to('parent.routine-tasks.new', $routine['id']) ?>" class="btn btn-primary">Tambah tugasan</a>
         </div>
         <?php if ($routine['tasks'] === []): ?>
@@ -110,7 +107,8 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                                     <span class="badge <?= $task['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $task['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
                                     <?php if (! $task['is_required']): ?><span class="badge text-bg-light border">Pilihan</span><?php endif ?>
                                 </div>
-                                <div class="small text-secondary"><?= $task['task_time'] ? esc(substr($task['task_time'], 0, 5)) : 'Tiada masa' ?> · <?= esc($task['points']) ?> mata</div>
+                                <div class="small text-secondary"><?= esc(ui_task_time($task)) ?> · <?= esc($task['points']) ?> mata</div>
+                                <div class="small text-secondary"><?= esc(ui_task_schedule($task)) ?></div>
                             </div>
                             <div class="d-flex gap-2">
                                 <a href="<?= route_to('parent.routine-tasks.edit', $task['id']) ?>" class="btn btn-outline-primary">Sunting</a>

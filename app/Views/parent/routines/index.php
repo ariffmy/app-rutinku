@@ -47,7 +47,7 @@
                             <?php endforeach ?>
                         </div>
                         <div class="small text-secondary mb-3">
-                            <?= $routine['start_time'] ? esc(substr($routine['start_time'], 0, 5)) : 'Tiada masa mula' ?> · <?= esc($routine['task_count']) ?> tugasan
+                            <?= $routine['start_time'] ? esc(ui_time($routine['start_time'])) : 'Tiada masa mula' ?> · <?= esc($routine['task_count']) ?> tugasan
                         </div>
                         <a href="<?= route_to('parent.routines.edit', $routine['id']) ?>" class="btn btn-outline-primary">Sunting rutin</a>
                     </div>

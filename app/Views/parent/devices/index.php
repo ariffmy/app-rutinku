@@ -59,9 +59,9 @@
                                 </div>
                                 <dl class="row small text-secondary mb-0">
                                     <dt class="col-5 col-sm-3">Jenis</dt><dd class="col-7 col-sm-9"><?= esc(ui_label('device', $device['device_type'])) ?></dd>
-                                    <dt class="col-5 col-sm-3">Disediakan</dt><dd class="col-7 col-sm-9"><?= esc($device['created_at']) ?></dd>
-                                    <dt class="col-5 col-sm-3">Tamat tempoh</dt><dd class="col-7 col-sm-9"><?= esc($device['expires_at']) ?></dd>
-                                    <dt class="col-5 col-sm-3">Kali terakhir digunakan</dt><dd class="col-7 col-sm-9"><?= esc($device['last_used_at'] ?: 'Belum digunakan') ?></dd>
+                                    <dt class="col-5 col-sm-3">Disediakan</dt><dd class="col-7 col-sm-9"><?= esc(ui_datetime($device['created_at'])) ?></dd>
+                                    <dt class="col-5 col-sm-3">Tamat tempoh</dt><dd class="col-7 col-sm-9"><?= esc(ui_datetime($device['expires_at'])) ?></dd>
+                                    <dt class="col-5 col-sm-3">Kali terakhir digunakan</dt><dd class="col-7 col-sm-9"><?= esc($device['last_used_at'] ? ui_datetime($device['last_used_at']) : 'Belum digunakan') ?></dd>
                                 </dl>
                             </div>
                             <?php if ($active): ?>
