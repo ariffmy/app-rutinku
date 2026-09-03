@@ -60,7 +60,7 @@ class RewardService
         $family = $this->parentFamily($parentUserId);
         $reward = ($this->rewards ?? new RewardModel())->find($rewardId);
         if ($reward === null || (int) $reward['family_id'] !== (int) $family['id']) {
-            throw new AuthorizationException('Parent cannot manage this reward.');
+            throw new AuthorizationException('Ibu bapa tidak boleh mengurus ganjaran ini.');
         }
 
         return $reward;
@@ -91,7 +91,7 @@ class RewardService
     {
         $this->getForParent($parentUserId, $rewardId);
         if (! ($this->rewards ?? new RewardModel())->update($rewardId, ['is_active' => 0])) {
-            throw new RewardException('Reward tidak dapat dinyahaktifkan.');
+            throw new RewardException('Ganjaran tidak dapat dinyahaktifkan.');
         }
     }
 
@@ -143,7 +143,7 @@ class RewardService
             $reward = ($this->rewards ?? new RewardModel())->find($rewardId);
             if ($reward === null || ! (bool) $reward['is_active']
                 || (int) $reward['family_id'] !== (int) $family['id']) {
-                throw new RewardException('Reward ini tidak tersedia.');
+                throw new RewardException('Ganjaran ini tidak tersedia.');
             }
 
             $pending = ($this->redemptions ?? new RewardRedemptionModel())
@@ -152,11 +152,11 @@ class RewardService
                 ->where('status', RewardRedemptionStatus::PENDING->value)
                 ->first();
             if ($pending !== null) {
-                throw new RewardException('Reward ini sudah mempunyai request pending.');
+                throw new RewardException('Ganjaran ini sudah mempunyai permohonan menunggu kelulusan.');
             }
 
             if (($this->points ?? new PointService(db: $this->db))->getBalance($childUserId) < (int) $reward['points_required']) {
-                throw new RewardException('Points belum mencukupi untuk reward ini.');
+                throw new RewardException('Mata belum mencukupi untuk ganjaran ini.');
             }
 
             $redemptionId = ($this->redemptions ?? new RewardRedemptionModel())->insert([
@@ -171,7 +171,7 @@ class RewardService
                 'rejected_by_user_id' => null,
             ], true);
             if ($redemptionId === false) {
-                throw new RewardException('Request reward tidak dapat direkodkan.');
+                throw new RewardException('Permohonan ganjaran tidak dapat direkodkan.');
             }
             $this->db->transComplete();
         } catch (Throwable $exception) {
@@ -194,12 +194,12 @@ class RewardService
             $this->lockRedemption($redemptionId);
             $redemption = ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
             if ($redemption === null || $redemption['status'] !== RewardRedemptionStatus::PENDING->value) {
-                throw new RewardException('Redemption ini bukan lagi pending.');
+                throw new RewardException('Penebusan ini bukan lagi menunggu kelulusan.');
             }
 
             $points = $this->points ?? new PointService(db: $this->db);
             if ($points->getBalance($childUserId) < (int) $redemption['points_used']) {
-                throw new RewardException('Balance Child tidak mencukupi untuk approval.');
+                throw new RewardException('Baki Anak tidak mencukupi untuk kelulusan.');
             }
 
             $pointTransaction = $points->redeemReward($childUserId, $redemptionId, $local, $parentUserId);
@@ -208,7 +208,7 @@ class RewardService
                 'approved_at' => $local->format('Y-m-d H:i:s'),
                 'approved_by_user_id' => $parentUserId,
             ])) {
-                throw new RewardException('Redemption tidak dapat diluluskan.');
+                throw new RewardException('Penebusan tidak dapat diluluskan.');
             }
 
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
@@ -217,7 +217,7 @@ class RewardService
                 $childUserId,
                 'reward_redemption',
                 $redemptionId,
-                'Parent meluluskan reward redemption.',
+                'Ibu bapa meluluskan penebusan ganjaran.',
                 ['status' => RewardRedemptionStatus::PENDING->value],
                 [
                     'status' => RewardRedemptionStatus::APPROVED->value,
@@ -245,14 +245,14 @@ class RewardService
             $this->lockRedemption($redemptionId);
             $redemption = ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
             if ($redemption === null || $redemption['status'] !== RewardRedemptionStatus::PENDING->value) {
-                throw new RewardException('Redemption ini bukan lagi pending.');
+                throw new RewardException('Penebusan ini bukan lagi menunggu kelulusan.');
             }
             if (! ($this->redemptions ?? new RewardRedemptionModel())->update($redemptionId, [
                 'status' => RewardRedemptionStatus::REJECTED->value,
                 'rejected_at' => $local->format('Y-m-d H:i:s'),
                 'rejected_by_user_id' => $parentUserId,
             ])) {
-                throw new RewardException('Redemption tidak dapat ditolak.');
+                throw new RewardException('Penebusan tidak dapat ditolak.');
             }
 
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
@@ -261,7 +261,7 @@ class RewardService
                 $childUserId,
                 'reward_redemption',
                 $redemptionId,
-                'Parent menolak reward redemption.',
+                'Ibu bapa menolak penebusan ganjaran.',
                 ['status' => RewardRedemptionStatus::PENDING->value],
                 ['status' => RewardRedemptionStatus::REJECTED->value, 'points_used' => 0],
             );
@@ -279,7 +279,7 @@ class RewardService
         $redemption = ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
         if ($redemption === null || ! ($this->authorization ?? new FamilyAuthorizationService())
             ->parentCanManageChild($parentUserId, (int) $redemption['child_user_id'])) {
-            throw new AuthorizationException('Parent cannot manage this redemption.');
+            throw new AuthorizationException('Ibu bapa tidak boleh mengurus penebusan ini.');
         }
         $this->getForParent($parentUserId, (int) $redemption['reward_id']);
 
@@ -291,7 +291,7 @@ class RewardService
         $parent = ($this->users ?? new UserModel())->find($parentUserId);
         $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
         if ($parent === null || ! $parent->is_active || $parent->roleEnum() !== UserRole::PARENT || $family === null) {
-            throw new AuthorizationException('Parent family context is invalid.');
+            throw new AuthorizationException('Maklumat keluarga ibu bapa tidak sah.');
         }
 
         return $family;
@@ -302,7 +302,7 @@ class RewardService
         $child = ($this->users ?? new UserModel())->find($childUserId);
         $family = ($this->families ?? new FamilyService())->currentFamilyForUser($childUserId);
         if ($child === null || ! $child->is_active || $child->roleEnum() !== UserRole::CHILD || $family === null) {
-            throw new RewardException('Child family context is invalid.');
+            throw new RewardException('Maklumat keluarga anak tidak sah.');
         }
 
         return $family;

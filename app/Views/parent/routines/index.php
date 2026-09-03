@@ -4,18 +4,18 @@
 <?php $dayNames = [1 => 'Isn', 2 => 'Sel', 3 => 'Rab', 4 => 'Kha', 5 => 'Jum', 6 => 'Sab', 7 => 'Ahd']; ?>
 <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
     <div>
-        <h1 class="h2 mb-1">Routines</h1>
-        <p class="text-secondary mb-0">Jadual mingguan berulang untuk setiap Child.</p>
+        <h1 class="h2 mb-1">Rutin</h1>
+        <p class="text-secondary mb-0">Jadual mingguan berulang untuk setiap Anak.</p>
     </div>
-    <a href="<?= route_to('parent.routines.new') ?>" class="btn btn-primary">Tambah routine</a>
+    <a href="<?= route_to('parent.routines.new') ?>" class="btn btn-primary">Tambah rutin</a>
 </div>
 
 <form method="get" action="<?= route_to('parent.routines') ?>" class="card border-0 shadow-sm mb-4">
     <div class="card-body d-flex flex-column flex-sm-row gap-2 align-items-sm-end">
         <div class="flex-grow-1">
-            <label for="child" class="form-label">Tapis mengikut Child</label>
+            <label for="child" class="form-label">Tapis mengikut Anak</label>
             <select id="child" name="child" class="form-select">
-                <option value="">Semua Child</option>
+                <option value="">Semua Anak</option>
                 <?php foreach ($children as $child): ?>
                     <option value="<?= esc($child['id']) ?>" <?= $selectedChildId === (int) $child['id'] ? 'selected' : '' ?>><?= esc($child['name']) ?></option>
                 <?php endforeach ?>
@@ -26,7 +26,7 @@
 </form>
 
 <?php if ($routines === []): ?>
-    <div class="card border-0 shadow-sm"><div class="card-body p-4 text-center text-secondary">Belum ada routine. Cipta routine pertama untuk bermula.</div></div>
+    <div class="card border-0 shadow-sm"><div class="card-body p-4 text-center text-secondary">Belum ada rutin. Cipta rutin pertama untuk bermula.</div></div>
 <?php else: ?>
     <div class="row g-3">
         <?php foreach ($routines as $routine): ?>
@@ -47,9 +47,9 @@
                             <?php endforeach ?>
                         </div>
                         <div class="small text-secondary mb-3">
-                            <?= $routine['start_time'] ? esc(substr($routine['start_time'], 0, 5)) : 'Tiada masa mula' ?> · <?= esc($routine['task_count']) ?> task
+                            <?= $routine['start_time'] ? esc(substr($routine['start_time'], 0, 5)) : 'Tiada masa mula' ?> · <?= esc($routine['task_count']) ?> tugasan
                         </div>
-                        <a href="<?= route_to('parent.routines.edit', $routine['id']) ?>" class="btn btn-outline-primary">Edit routine</a>
+                        <a href="<?= route_to('parent.routines.edit', $routine['id']) ?>" class="btn btn-outline-primary">Sunting rutin</a>
                     </div>
                 </article>
             </div>

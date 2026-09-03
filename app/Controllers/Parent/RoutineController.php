@@ -27,7 +27,7 @@ class RoutineController extends BaseController
         }
 
         return view('parent/routines/index', [
-            'title' => 'Routines',
+            'title' => 'Rutin',
             'routines' => $routines,
             'children' => $this->children(),
             'selectedChildId' => is_numeric($childId) ? (int) $childId : null,
@@ -37,7 +37,7 @@ class RoutineController extends BaseController
     public function new()
     {
         return view('parent/routines/form', [
-            'title' => 'Routine baharu',
+            'title' => 'Rutin baharu',
             'routine' => null,
             'children' => $this->children(),
             'action' => route_to('parent.routines.create'),
@@ -62,7 +62,7 @@ class RoutineController extends BaseController
                 );
 
                 return redirect()->to(route_to('parent.routines'))->with('success',
-                    'Routine telah dicipta untuk ' . count($routineIds) . ' anak aktif. Buka setiap routine untuk tambah task; setiap salinan diurus berasingan.');
+                    'Rutin telah dicipta untuk ' . count($routineIds) . ' anak aktif. Buka setiap rutin untuk tambah tugasan; setiap salinan diurus berasingan.');
             }
 
             $routineId = $service->create(
@@ -76,7 +76,7 @@ class RoutineController extends BaseController
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Routine telah dicipta. Tambah task di bawah.');
+        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Rutin telah dicipta. Tambah tugasan di bawah.');
     }
 
     public function edit(int $routineId)
@@ -90,7 +90,7 @@ class RoutineController extends BaseController
         }
 
         return view('parent/routines/form', [
-            'title' => 'Edit routine',
+            'title' => 'Sunting rutin',
             'routine' => $routine,
             'children' => $this->children(),
             'action' => route_to('parent.routines.update', $routineId),
@@ -118,7 +118,7 @@ class RoutineController extends BaseController
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Routine telah dikemas kini.');
+        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Rutin telah dikemas kini.');
     }
 
     public function delete(int $routineId)
@@ -132,8 +132,8 @@ class RoutineController extends BaseController
         }
 
         $message = $action === 'archived'
-            ? 'Routine telah dinyahaktifkan kerana mempunyai sejarah completion.'
-            : 'Routine telah dipadam.';
+            ? 'Rutin telah dinyahaktifkan kerana mempunyai sejarah penyelesaian.'
+            : 'Rutin telah dipadam.';
 
         return redirect()->to(route_to('parent.routines'))->with('success', $message);
     }

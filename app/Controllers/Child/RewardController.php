@@ -15,7 +15,7 @@ class RewardController extends BaseController
         $context = Services::trustedChildContext();
 
         return view('child/rewards', [
-            'title' => 'Rewards',
+            'title' => 'Ganjaran',
             'child' => $context->child(),
             'catalogue' => (new RewardService())->childCatalogue((int) $context->child()->id),
             'activeNav' => 'rewards',
@@ -35,6 +35,6 @@ class RewardController extends BaseController
             return redirect()->to(route_to('child.rewards'))->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('child.rewards'))->with('success', 'Reward telah diminta dan menunggu Parent.');
+        return redirect()->to(route_to('child.rewards'))->with('success', 'Ganjaran telah diminta dan menunggu Ibu bapa.');
     }
 }

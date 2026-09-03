@@ -77,7 +77,7 @@ class ChildDeviceService
             ], true);
 
             if ($deviceId === false) {
-                throw new \RuntimeException('Trusted device could not be created: ' . implode(' ', $devices->errors()));
+                throw new \RuntimeException('Peranti dipercayai tidak dapat disediakan: ' . implode(' ', $devices->errors()));
             }
 
             $audit->record(
@@ -86,7 +86,7 @@ class ChildDeviceService
                 $childUserId,
                 'user_device',
                 (int) $deviceId,
-                'Parent provisioned this browser as the Child trusted device.',
+                'Ibu bapa menyediakan pelayar ini sebagai peranti dipercayai anak.',
                 $activeDevices === [] ? null : ['replaced_device_ids' => array_column($activeDevices, 'id')],
                 [
                     'device_name' => $this->normalizeNullable($deviceName),
@@ -119,7 +119,7 @@ class ChildDeviceService
             $device = $devices->find($deviceId);
 
             if ($device === null || (int) $device['user_id'] !== $childUserId) {
-                throw new AuthorizationException('Device does not belong to this Child.');
+                throw new AuthorizationException('Peranti ini bukan milik anak ini.');
             }
 
             if (! (bool) $device['is_trusted'] || $device['revoked_at'] !== null) {
@@ -138,7 +138,7 @@ class ChildDeviceService
                 $childUserId,
                 'user_device',
                 $deviceId,
-                'Parent revoked a Child trusted device.',
+                'Ibu bapa membatalkan akses peranti dipercayai anak.',
                 ['is_trusted' => true, 'revoked_at' => null],
                 ['is_trusted' => false, 'revoked_at' => $now],
             );
@@ -182,7 +182,7 @@ class ChildDeviceService
                 $childUserId,
                 'user_device',
                 null,
-                'Parent reset all trusted devices for the Child.',
+                'Ibu bapa menetapkan semula semua peranti dipercayai anak.',
                 ['active_device_ids' => array_column($activeDevices, 'id')],
                 ['active_devices' => 0],
             );
@@ -293,7 +293,7 @@ class ChildDeviceService
     private function assertParentCanManageChild(int $parentUserId, int $childUserId): void
     {
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childUserId)) {
-            throw new AuthorizationException('Parent cannot manage this Child.');
+            throw new AuthorizationException('Ibu bapa tidak boleh mengurus anak ini.');
         }
     }
 

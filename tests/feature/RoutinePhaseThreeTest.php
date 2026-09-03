@@ -249,7 +249,7 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
 
         $editTask = $this->withSession($session)->get('/routine-tasks/' . $taskId . '/edit');
         $editTask->assertOK();
-        $editTask->assertSee('Task untuk Rendered Routine');
+        $editTask->assertSee('Tugasan untuk Rendered Routine');
     }
 
     public function testCompletionRoutesRemainAvailableAndRankingIsParentGetOnly(): void

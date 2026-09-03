@@ -20,7 +20,7 @@ class TaskController extends BaseController
             return redirect()->to(route_to('child.today'))->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('child.today'))->with('success', 'Syabas! Task telah disiapkan.');
+        return redirect()->to(route_to('child.today'))->with('success', 'Syabas! Tugasan telah disiapkan.');
     }
 
     public function undo(int $taskId)
@@ -33,6 +33,6 @@ class TaskController extends BaseController
             return redirect()->to(route_to('child.today'))->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('child.today'))->with('success', 'Completion telah dibatalkan.');
+        return redirect()->to(route_to('child.today'))->with('success', 'Penyelesaian telah dibatalkan.');
     }
 }

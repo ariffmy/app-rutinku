@@ -14,7 +14,7 @@
         <div class="card-body p-4 p-sm-5">
             <p class="brand-mark mb-2">RutinKu</p>
             <h1 class="h3 mb-2">Selamat kembali</h1>
-            <p class="text-secondary mb-4">Log masuk Parent untuk mengurus keluarga.</p>
+            <p class="text-secondary mb-4">Log masuk Ibu bapa untuk mengurus keluarga.</p>
 
             <?php if (session('error')): ?>
                 <div class="alert alert-danger" role="alert"><?= esc(session('error')) ?></div>
@@ -46,7 +46,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg w-100">Log masuk</button>
             </form>
-            <p class="small text-secondary text-center mb-0 mt-4">Peranti Child hanya boleh disediakan oleh Parent.</p>
+            <p class="small text-secondary text-center mb-0 mt-4">Peranti Anak hanya boleh disediakan oleh Ibu bapa.</p>
         </div>
     </div>
 </main>

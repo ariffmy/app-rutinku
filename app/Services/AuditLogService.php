@@ -54,7 +54,7 @@ class AuditLogService
         ], true);
 
         if ($id === false) {
-            throw new \RuntimeException('Audit log could not be written.');
+            throw new \RuntimeException('Rekod audit tidak dapat disimpan.');
         }
 
         return (int) $id;

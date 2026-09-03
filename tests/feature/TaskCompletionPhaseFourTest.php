@@ -227,8 +227,8 @@ final class TaskCompletionPhaseFourTest extends CIUnitTestCase
 
         $progress = $this->get('/child/progress');
         $progress->assertOK();
-        $progress->assertSee('Progress hari ini');
-        $progress->assertSee('Baki points');
+        $progress->assertSee('Kemajuan hari ini');
+        $progress->assertSee('Baki mata');
     }
 
     public function testCompletedTaskAndRoutineAreArchivedInsteadOfDeletingHistory(): void

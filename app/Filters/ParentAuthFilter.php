@@ -17,7 +17,7 @@ class ParentAuthFilter implements FilterInterface
         if (! (new AuthService())->isParent()) {
             service('session')->remove(['user_id', 'user_role', 'family_id', 'auth_expires_at']);
 
-            return redirect()->to(route_to('parent.login'))->with('error', 'Sila log masuk sebagai Parent.');
+            return redirect()->to(route_to('parent.login'))->with('error', 'Sila log masuk sebagai Ibu bapa.');
         }
 
         return null;

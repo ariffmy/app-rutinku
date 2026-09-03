@@ -155,7 +155,7 @@ class ReportService
         $parent = ($this->users ?? new UserModel())->find($parentUserId);
         $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
         if ($parent === null || ! $parent->is_active || $parent->roleEnum() !== UserRole::PARENT || $family === null) {
-            throw new AuthorizationException('Parent family context is invalid.');
+            throw new AuthorizationException('Maklumat keluarga ibu bapa tidak sah.');
         }
 
         return $family;

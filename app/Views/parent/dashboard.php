@@ -4,22 +4,22 @@
 <header class="mb-4">
     <p class="text-uppercase text-secondary small fw-semibold mb-1"><?= esc($family['name']) ?></p>
     <h1 class="h2 mb-1">Hai, <?= esc($currentUser->name) ?></h1>
-    <p class="text-secondary mb-0">Pantau progress family dan urus rutin, rewards serta peranti.</p>
+    <p class="text-secondary mb-0">Pantau kemajuan keluarga dan urus rutin, ganjaran serta peranti.</p>
 </header>
 
 <section class="row g-3 mb-4" aria-label="Ringkasan hari ini">
-    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Tasks Today</p><p class="h2 mb-0"><?= esc($todayRanking['total_scheduled_tasks']) ?></p></div></div></div>
-    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Tasks Completed</p><p class="h2 mb-0"><?= esc($todayRanking['total_completed_tasks']) ?></p></div></div></div>
-    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Pending Rewards</p><p class="h2 mb-0"><?= esc($pendingRewards) ?></p></div></div></div>
-    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Today's Leader</p><p class="h5 mb-0"><?= isset($todayRanking['rows'][0]) ? esc($todayRanking['rows'][0]['name']) : '—' ?></p></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Tugasan Hari Ini</p><p class="h2 mb-0"><?= esc($todayRanking['total_scheduled_tasks']) ?></p></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Tugasan Selesai</p><p class="h2 mb-0"><?= esc($todayRanking['total_completed_tasks']) ?></p></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Ganjaran Menunggu Kelulusan</p><p class="h2 mb-0"><?= esc($pendingRewards) ?></p></div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Pendahulu Hari Ini</p><p class="h5 mb-0"><?= isset($todayRanking['rows'][0]) ? esc($todayRanking['rows'][0]['name']) : '—' ?></p></div></div></div>
 </section>
 
 <section class="mb-5" aria-labelledby="family-progress-heading">
-    <div class="d-flex justify-content-between align-items-center mb-3"><h2 id="family-progress-heading" class="h4 mb-0">Family Progress</h2><a href="<?= route_to('parent.ranking') ?>" class="btn btn-outline-primary btn-sm">Lihat ranking</a></div>
+    <div class="d-flex justify-content-between align-items-center mb-3"><h2 id="family-progress-heading" class="h4 mb-0">Kemajuan Keluarga</h2><a href="<?= route_to('parent.ranking') ?>" class="btn btn-outline-primary btn-sm">Lihat kedudukan</a></div>
     <?php if ($todayRanking['rows'] === []): ?>
-        <div class="card border-0 shadow-sm"><div class="card-body text-secondary">Tiada Child yang layak untuk ranking hari ini.</div></div>
+        <div class="card border-0 shadow-sm"><div class="card-body text-secondary">Tiada Anak yang layak untuk kedudukan hari ini.</div></div>
     <?php else: ?>
-        <div class="card border-0 shadow-sm overflow-hidden"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Child</th><th>Tasks</th><th>Completion</th><th>Earned</th><th>Streak</th></tr></thead><tbody>
+        <div class="card border-0 shadow-sm overflow-hidden"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Anak</th><th>Tugasan</th><th>Penyelesaian</th><th>Mata Diperoleh</th><th>Hari Berturut-turut</th></tr></thead><tbody>
             <?php foreach ($todayRanking['rows'] as $row): ?><tr><td class="fw-semibold"><?= esc($row['name']) ?></td><td><?= esc($row['completed_tasks']) ?> / <?= esc($row['scheduled_tasks']) ?></td><td><?= esc($row['completion_percentage']) ?>%</td><td>⭐ <?= esc($row['earned_points']) ?></td><td>🔥 <?= esc($row['current_streak']) ?></td></tr><?php endforeach ?>
         </tbody></table></div></div>
     <?php endif ?>
@@ -27,8 +27,8 @@
 
 <section aria-labelledby="children-heading">
     <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 id="children-heading" class="h4 mb-0">Children</h2>
-        <div><span class="badge text-bg-light border me-2"><?= count($children) ?> ahli</span><a href="<?= route_to('parent.children') ?>" class="btn btn-outline-primary btn-sm">Urus Child</a></div>
+        <h2 id="children-heading" class="h4 mb-0">Anak-anak</h2>
+        <div><span class="badge text-bg-light border me-2"><?= count($children) ?> ahli</span><a href="<?= route_to('parent.children') ?>" class="btn btn-outline-primary btn-sm">Urus Anak</a></div>
     </div>
     <div class="row g-3">
         <?php foreach ($children as $child): ?>

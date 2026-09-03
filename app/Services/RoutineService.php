@@ -42,7 +42,7 @@ class RoutineService
 
         if ($childUserId !== null) {
             if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childUserId)) {
-                throw new AuthorizationException('Parent cannot view routines for this Child.');
+                throw new AuthorizationException('Ibu bapa tidak boleh melihat rutin anak ini.');
             }
             $model->where('routines.child_user_id', $childUserId);
         }
@@ -77,7 +77,7 @@ class RoutineService
     {
         $childUserId = (int) ($data['child_user_id'] ?? 0);
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childUserId)) {
-            throw new AuthorizationException('Parent cannot create a routine for this Child.');
+            throw new AuthorizationException('Ibu bapa tidak boleh mencipta rutin untuk anak ini.');
         }
 
         $days = $this->normalizeDays($days);
@@ -92,7 +92,7 @@ class RoutineService
         $families = $this->families ?? new FamilyService();
         $family = $families->currentFamilyForUser($parentUserId);
         if ($family === null) {
-            throw new AuthorizationException('Parent must belong to one family.');
+            throw new AuthorizationException('Ibu bapa mesti menjadi ahli satu keluarga.');
         }
 
         $authorization = $this->authorization ?? new FamilyAuthorizationService();
@@ -104,7 +104,7 @@ class RoutineService
 
             $childUserId = (int) $child['id'];
             if (! $authorization->parentCanManageChild($parentUserId, $childUserId)) {
-                throw new AuthorizationException('Parent cannot create a routine for this Child.');
+                throw new AuthorizationException('Ibu bapa tidak boleh mencipta rutin untuk anak ini.');
             }
             $payloads[] = $this->routinePayload($data, $childUserId);
         }
@@ -121,7 +121,7 @@ class RoutineService
         $routine = $this->getForParent($parentUserId, $routineId);
         $childUserId = (int) ($data['child_user_id'] ?? 0);
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childUserId)) {
-            throw new AuthorizationException('Parent cannot move this routine to that Child.');
+            throw new AuthorizationException('Ibu bapa tidak boleh memindahkan rutin kepada anak tersebut.');
         }
 
         $days = $this->normalizeDays($days);
@@ -171,7 +171,7 @@ class RoutineService
     public function getTaskForParent(int $parentUserId, int $taskId): array
     {
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageRoutineTask($parentUserId, $taskId)) {
-            throw new AuthorizationException('Parent cannot manage this routine task.');
+            throw new AuthorizationException('Ibu bapa tidak boleh mengurus tugasan rutin ini.');
         }
 
         $task = ($this->routineTasks ?? new RoutineTaskModel())->find($taskId);
@@ -248,7 +248,7 @@ class RoutineService
     private function assertParentCanManageRoutine(int $parentUserId, int $routineId): void
     {
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageRoutine($parentUserId, $routineId)) {
-            throw new AuthorizationException('Parent cannot manage this routine.');
+            throw new AuthorizationException('Ibu bapa tidak boleh mengurus rutin ini.');
         }
     }
 

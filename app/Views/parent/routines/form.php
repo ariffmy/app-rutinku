@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 <?php
-$dayNames = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+$dayNames = [1 => 'Isnin', 2 => 'Selasa', 3 => 'Rabu', 4 => 'Khamis', 5 => 'Jumaat', 6 => 'Sabtu', 7 => 'Ahad'];
 $selectedDays = (array) (old('days') ?? ($routine['days'] ?? []));
 $selectedChild = old('child_user_id') ?? ($routine['child_user_id'] ?? '');
 $selectedChild = is_scalar($selectedChild) ? (string) $selectedChild : '';
@@ -10,8 +10,8 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
 ?>
 <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
     <div>
-        <a href="<?= route_to('parent.routines') ?>" class="small text-decoration-none">← Routines</a>
-        <h1 class="h2 mb-1"><?= $routine ? 'Edit routine' : 'Routine baharu' ?></h1>
+        <a href="<?= route_to('parent.routines') ?>" class="small text-decoration-none">← Rutin</a>
+        <h1 class="h2 mb-1"><?= $routine ? 'Sunting rutin' : 'Rutin baharu' ?></h1>
     </div>
     <?php if ($routine): ?>
         <form action="<?= route_to('parent.routines.delete', $routine['id']) ?>" method="post">
@@ -30,9 +30,9 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
     <div class="card-body p-4">
         <div class="row g-3">
             <div class="col-12 col-md-6">
-                <label for="child_user_id" class="form-label">Child</label>
+                <label for="child_user_id" class="form-label">Anak</label>
                 <select id="child_user_id" name="child_user_id" class="form-select" required<?= ! $routine ? ' aria-describedby="child-selection-help"' : '' ?>>
-                    <option value="">Pilih Child</option>
+                    <option value="">Pilih Anak</option>
                     <?php if (! $routine && $children !== []): ?>
                         <option value="all" <?= $selectedChild === 'all' ? 'selected' : '' ?>>Semua anak</option>
                     <?php endif ?>
@@ -43,12 +43,12 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                 <?php if (! $routine): ?>
                     <div id="child-selection-help" class="form-text"><?= $children === []
                         ? 'Tiada anak aktif. Tambah atau aktifkan anak dahulu.'
-                        : 'Semua anak: cipta salinan routine untuk setiap anak aktif dalam keluarga. Task dan perubahan selepas ini diurus berasingan bagi setiap anak.' ?></div>
+                        : 'Semua anak: cipta salinan rutin untuk setiap anak aktif dalam keluarga. Tugasan dan perubahan selepas ini diurus berasingan bagi setiap anak.' ?></div>
                 <?php endif ?>
             </div>
             <div class="col-12 col-md-6">
-                <label for="name" class="form-label">Nama routine</label>
-                <input id="name" name="name" class="form-control" maxlength="120" required value="<?= esc(old('name') ?? ($routine['name'] ?? '')) ?>" placeholder="Contoh: Morning Routine">
+                <label for="name" class="form-label">Nama rutin</label>
+                <input id="name" name="name" class="form-control" maxlength="120" required value="<?= esc(old('name') ?? ($routine['name'] ?? '')) ?>" placeholder="Contoh: Rutin Pagi">
             </div>
             <div class="col-12">
                 <label for="description" class="form-label">Penerangan</label>
@@ -56,7 +56,7 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
             </div>
             <div class="col-12 col-md-4">
                 <label for="type" class="form-label">Jenis</label>
-                <input id="type" name="type" class="form-control" maxlength="50" value="<?= esc(old('type') ?? ($routine['type'] ?? '')) ?>" placeholder="Morning, School, Evening">
+                <input id="type" name="type" class="form-control" maxlength="50" value="<?= esc(old('type') ?? ($routine['type'] ?? '')) ?>" placeholder="Pagi, Sekolah, Petang">
             </div>
             <div class="col-6 col-md-4">
                 <label for="start_time" class="form-label">Masa mula</label>
@@ -81,24 +81,24 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                 <input type="hidden" name="is_active" value="0">
                 <div class="form-check form-switch">
                     <input id="is_active" name="is_active" value="1" type="checkbox" class="form-check-input" <?= $active ? 'checked' : '' ?>>
-                    <label for="is_active" class="form-check-label">Routine aktif</label>
+                    <label for="is_active" class="form-check-label">Rutin aktif</label>
                 </div>
             </div>
         </div>
     </div>
     <div class="card-footer bg-white border-0 px-4 pb-4">
-        <button type="submit" class="btn btn-primary">Simpan routine</button>
+        <button type="submit" class="btn btn-primary">Simpan rutin</button>
     </div>
 </form>
 
 <?php if ($routine): ?>
     <section aria-labelledby="tasks-heading">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div><h2 id="tasks-heading" class="h4 mb-1">Tasks</h2><p class="small text-secondary mb-0">Task aktif akan muncul pada hari routine dijadualkan.</p></div>
-            <a href="<?= route_to('parent.routine-tasks.new', $routine['id']) ?>" class="btn btn-primary">Tambah task</a>
+            <div><h2 id="tasks-heading" class="h4 mb-1">Tugasan</h2><p class="small text-secondary mb-0">Tugasan aktif akan muncul pada hari rutin dijadualkan.</p></div>
+            <a href="<?= route_to('parent.routine-tasks.new', $routine['id']) ?>" class="btn btn-primary">Tambah tugasan</a>
         </div>
         <?php if ($routine['tasks'] === []): ?>
-            <div class="card border-0 shadow-sm"><div class="card-body text-secondary">Belum ada task dalam routine ini.</div></div>
+            <div class="card border-0 shadow-sm"><div class="card-body text-secondary">Belum ada tugasan dalam rutin ini.</div></div>
         <?php else: ?>
             <div class="vstack gap-2">
                 <?php foreach ($routine['tasks'] as $task): ?>
@@ -108,12 +108,12 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                     <h3 class="h5 mb-0"><?= esc($task['title']) ?></h3>
                                     <span class="badge <?= $task['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $task['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
-                                    <?php if (! $task['is_required']): ?><span class="badge text-bg-light border">Optional</span><?php endif ?>
+                                    <?php if (! $task['is_required']): ?><span class="badge text-bg-light border">Pilihan</span><?php endif ?>
                                 </div>
-                                <div class="small text-secondary"><?= $task['task_time'] ? esc(substr($task['task_time'], 0, 5)) : 'Tiada masa' ?> · <?= esc($task['points']) ?> points</div>
+                                <div class="small text-secondary"><?= $task['task_time'] ? esc(substr($task['task_time'], 0, 5)) : 'Tiada masa' ?> · <?= esc($task['points']) ?> mata</div>
                             </div>
                             <div class="d-flex gap-2">
-                                <a href="<?= route_to('parent.routine-tasks.edit', $task['id']) ?>" class="btn btn-outline-primary">Edit</a>
+                                <a href="<?= route_to('parent.routine-tasks.edit', $task['id']) ?>" class="btn btn-outline-primary">Sunting</a>
                                 <form action="<?= route_to('parent.routine-tasks.delete', $task['id']) ?>" method="post">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn btn-outline-danger">Padam / nyahaktif</button>

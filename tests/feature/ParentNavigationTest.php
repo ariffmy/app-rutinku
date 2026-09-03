@@ -51,7 +51,7 @@ final class ParentNavigationTest extends CIUnitTestCase
         libxml_use_internal_errors($previous);
         $xpath = new DOMXPath($document);
 
-        $this->assertSame(1, $xpath->query('//nav[@aria-label="Navigasi Parent"]')->length);
+        $this->assertSame(1, $xpath->query('//nav[@aria-label="Navigasi Ibu bapa"]')->length);
         $this->assertSame(1, $xpath->query('//button[@data-parent-menu-toggle][@aria-controls="parent-nav-panel"][@aria-expanded="false"][@hidden]')->length);
         $this->assertSame(1, $xpath->query('//div[@id="parent-nav-panel"][not(@hidden)]')->length, 'Without JavaScript the links must remain usable.');
         $this->assertSame(7, $xpath->query('//ul[@class="parent-nav-links"]/li/a')->length);
@@ -67,14 +67,14 @@ final class ParentNavigationTest extends CIUnitTestCase
     public static function parentPages(): array
     {
         return [
-            ['/dashboard', 'Dashboard'],
-            ['/children', 'Children'],
-            ['/children/new', 'Children'],
-            ['/routines', 'Routines'],
-            ['/points', 'Points'],
-            ['/rewards', 'Rewards'],
-            ['/ranking', 'Ranking'],
-            ['/reports', 'Reports'],
+            ['/dashboard', 'Papan Pemuka'],
+            ['/children', 'Anak-anak'],
+            ['/children/new', 'Anak-anak'],
+            ['/routines', 'Rutin'],
+            ['/points', 'Mata'],
+            ['/rewards', 'Ganjaran'],
+            ['/ranking', 'Kedudukan'],
+            ['/reports', 'Laporan'],
         ];
     }
 
@@ -94,7 +94,7 @@ final class ParentNavigationTest extends CIUnitTestCase
     public function testUpdatedNavigationAssetsUseNewPwaCacheVersion(): void
     {
         $worker = file_get_contents(ROOTPATH . 'public/service-worker.js');
-        $this->assertStringContainsString('rutinku-static-v3', $worker);
+        $this->assertStringContainsString('rutinku-static-v4', $worker);
         $this->assertStringContainsString('/assets/css/app.css', $worker);
         $this->assertStringContainsString('/assets/js/app.js', $worker);
     }

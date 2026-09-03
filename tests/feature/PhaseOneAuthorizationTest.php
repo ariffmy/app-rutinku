@@ -79,7 +79,7 @@ final class PhaseOneAuthorizationTest extends CIUnitTestCase
         $response = $this->get('/child/today');
 
         $response->assertStatus(401);
-        $response->assertSee('Device Setup Required');
+        $response->assertSee('Peranti Perlu Disediakan');
         $response->assertDontSee('Log keluar');
         $response->assertDontSee('Switch User');
     }

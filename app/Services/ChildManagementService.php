@@ -41,7 +41,7 @@ class ChildManagementService
         if ($child === null || $child->roleEnum() !== UserRole::CHILD
             || ! ($this->authorization ?? new FamilyAuthorizationService())
                 ->userBelongsToFamily($childUserId, (int) $family['id'])) {
-            throw new AuthorizationException('Child tidak berada dalam family Parent ini.');
+            throw new AuthorizationException('Anak tidak berada dalam keluarga Ibu bapa ini.');
         }
 
         return [
@@ -73,11 +73,11 @@ class ChildManagementService
                 'last_login_at' => null,
             ], true);
             if ($childId === false) {
-                throw new \RuntimeException('Child tidak dapat dicipta: ' . implode(' ', $users->errors()));
+                throw new \RuntimeException('Anak tidak dapat dicipta: ' . implode(' ', $users->errors()));
             }
 
             if ($memberships->insert(['family_id' => (int) $family['id'], 'user_id' => (int) $childId], true) === false) {
-                throw new \RuntimeException('Family membership Child tidak dapat dicipta.');
+                throw new \RuntimeException('Keahlian keluarga anak tidak dapat dicipta.');
             }
             $profileId = $profiles->insert([
                 'user_id' => (int) $childId,
@@ -86,7 +86,7 @@ class ChildManagementService
                 'is_ranking_eligible' => $rankingEligible,
             ], true);
             if ($profileId === false) {
-                throw new \RuntimeException('Profil Child tidak dapat dicipta: ' . implode(' ', $profiles->errors()));
+                throw new \RuntimeException('Profil Anak tidak dapat dicipta: ' . implode(' ', $profiles->errors()));
             }
 
             ($this->auditLogs ?? new AuditLogService())->record(
@@ -95,7 +95,7 @@ class ChildManagementService
                 (int) $childId,
                 'child_profile',
                 (int) $profileId,
-                'Parent created a Child account and profile.',
+                'Ibu bapa mencipta akaun dan profil anak.',
                 null,
                 [
                     'name' => $name,
@@ -126,7 +126,7 @@ class ChildManagementService
         $this->db->transException(true)->transStart();
         try {
             if (! $users->update($childUserId, ['name' => $name, 'is_active' => $isActive])) {
-                throw new \RuntimeException('Akaun Child tidak dapat dikemas kini: ' . implode(' ', $users->errors()));
+                throw new \RuntimeException('Akaun Anak tidak dapat dikemas kini: ' . implode(' ', $users->errors()));
             }
 
             if ((bool) $current['user']->is_active && ! (bool) $isActive) {
@@ -152,7 +152,7 @@ class ChildManagementService
                         $childUserId,
                         'user_device',
                         null,
-                        'Child deactivation permanently revoked all trusted devices.',
+                        'Penyahaktifan anak membatalkan akses semua peranti dipercayai secara kekal.',
                         ['active_device_ids' => array_column($activeDevices, 'id')],
                         ['active_devices' => 0, 'revoked_at' => $now],
                     );
@@ -173,7 +173,7 @@ class ChildManagementService
                     'date_of_birth' => $dateOfBirth,
                     'is_ranking_eligible' => $rankingEligible,
                 ])) {
-                    throw new \RuntimeException('Profil Child tidak dapat dikemas kini: ' . implode(' ', $profiles->errors()));
+                    throw new \RuntimeException('Profil Anak tidak dapat dikemas kini: ' . implode(' ', $profiles->errors()));
                 }
             }
 
@@ -183,7 +183,7 @@ class ChildManagementService
                 $childUserId,
                 'child_profile',
                 (int) $profileId,
-                'Parent updated critical Child profile settings.',
+                'Ibu bapa mengemas kini tetapan penting profil anak.',
                 [
                     'name' => $current['user']->name,
                     'date_of_birth' => $profile['date_of_birth'] ?? null,
@@ -209,7 +209,7 @@ class ChildManagementService
         $parent = ($this->users ?? new UserModel())->find($parentUserId);
         $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
         if ($parent === null || ! $parent->is_active || $parent->roleEnum() !== UserRole::PARENT || $family === null) {
-            throw new AuthorizationException('Parent family context is invalid.');
+            throw new AuthorizationException('Maklumat keluarga ibu bapa tidak sah.');
         }
 
         return $family;
@@ -219,7 +219,7 @@ class ChildManagementService
     {
         $name = trim((string) $name);
         if ($name === '' || mb_strlen($name) > 120) {
-            throw new \InvalidArgumentException('Nama Child wajib dan maksimum 120 aksara.');
+            throw new \InvalidArgumentException('Nama Anak wajib dan maksimum 120 aksara.');
         }
 
         return $name;

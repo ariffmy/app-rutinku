@@ -37,7 +37,7 @@ class PointController extends BaseController
         }
 
         return view('parent/points/index', [
-            'title' => 'Points',
+            'title' => 'Mata',
             'children' => $children,
             'selectedChildId' => $selectedChildId,
             'account' => $account,
@@ -72,6 +72,6 @@ class PointController extends BaseController
         }
 
         return redirect()->to(route_to('parent.points') . '?child=' . $childUserId)
-            ->with('success', 'Adjustment points telah direkodkan.');
+            ->with('success', 'Pelarasan mata telah direkodkan.');
     }
 }

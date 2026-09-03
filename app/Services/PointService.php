@@ -42,7 +42,7 @@ class PointService
         $this->assertActiveChild($childUserId);
         $completion = ($this->completions ?? new TaskCompletionModel())->find($completionId);
         if ($completion === null || (int) $completion['child_user_id'] !== $childUserId) {
-            throw new PointException('Completion tidak sah untuk pemberian points.');
+            throw new PointException('Penyelesaian tidak sah untuk pemberian mata.');
         }
 
         $transactions = $this->transactions ?? new PointTransactionModel();
@@ -57,8 +57,8 @@ class PointService
 
         $task = ($this->routineTasks ?? new RoutineTaskModel())->find((int) $completion['routine_task_id']);
         $description = $task === null
-            ? 'Task completion #' . $completionId
-            : 'Task selesai: ' . $task['title'];
+            ? 'Penyelesaian tugasan #' . $completionId
+            : 'Tugasan selesai: ' . $task['title'];
 
         try {
             $transactionId = $transactions->insert([
@@ -86,7 +86,7 @@ class PointService
         }
 
         if ($transactionId === false) {
-            throw new PointException('Points task tidak dapat direkodkan.');
+            throw new PointException('Mata tugasan tidak dapat direkodkan.');
         }
 
         return ($this->transactions ?? new PointTransactionModel())->find((int) $transactionId);
@@ -107,7 +107,7 @@ class PointService
             ->where('reference_id', $completionId)
             ->first();
         if ($original === null) {
-            throw new PointException('Rekod points asal tidak ditemui.');
+            throw new PointException('Rekod mata asal tidak ditemui.');
         }
 
         $existing = ($this->transactions ?? new PointTransactionModel())
@@ -127,7 +127,7 @@ class PointService
                 'points' => -((int) $original['points']),
                 'reference_type' => 'point_transaction',
                 'reference_id' => (int) $original['id'],
-                'description' => mb_substr('Undo: ' . ($original['description'] ?: 'task completion'), 0, 500),
+                'description' => mb_substr('Batal: ' . ($original['description'] ?: 'penyelesaian tugasan'), 0, 500),
                 'transaction_date' => $local->format('Y-m-d'),
                 'created_by_user_id' => $createdByUserId ?? $childUserId,
             ], true);
@@ -146,7 +146,7 @@ class PointService
         }
 
         if ($transactionId === false) {
-            throw new PointException('Reversal points tidak dapat direkodkan.');
+            throw new PointException('Pembatalan mata tidak dapat direkodkan.');
         }
 
         return ($this->transactions ?? new PointTransactionModel())->find((int) $transactionId);
@@ -161,15 +161,15 @@ class PointService
     ): array {
         if (! ($this->authorization ?? new FamilyAuthorizationService())
             ->parentCanManageChild($parentUserId, $childUserId)) {
-            throw new AuthorizationException('Parent cannot adjust points for this Child.');
+            throw new AuthorizationException('Ibu bapa tidak boleh melaraskan mata anak ini.');
         }
 
         $reason = trim($reason);
         if ($points === 0 || abs($points) > 1000000) {
-            throw new PointException('Jumlah adjustment mesti antara -1,000,000 hingga 1,000,000 dan bukan sifar.');
+            throw new PointException('Jumlah pelarasan mesti antara -1,000,000 hingga 1,000,000 dan bukan sifar.');
         }
         if ($reason === '' || mb_strlen($reason) > 500) {
-            throw new PointException('Reason adjustment wajib dan tidak boleh melebihi 500 aksara.');
+            throw new PointException('Sebab pelarasan wajib dan tidak boleh melebihi 500 aksara.');
         }
 
         $local = $this->localTime($at);
@@ -188,7 +188,7 @@ class PointService
                 'created_by_user_id' => $parentUserId,
             ], true);
             if ($transactionId === false) {
-                throw new PointException('Adjustment points tidak dapat direkodkan.');
+                throw new PointException('Pelarasan mata tidak dapat direkodkan.');
             }
 
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
@@ -219,7 +219,7 @@ class PointService
         $this->assertActiveChild($childUserId);
         $redemption = ($this->rewardRedemptions ?? new RewardRedemptionModel())->find($redemptionId);
         if ($redemption === null || (int) $redemption['child_user_id'] !== $childUserId) {
-            throw new PointException('Redemption tidak sah untuk potongan points.');
+            throw new PointException('Penebusan tidak sah untuk potongan mata.');
         }
 
         $transactions = $this->transactions ?? new PointTransactionModel();
@@ -233,7 +233,7 @@ class PointService
         }
 
         $reward = ($this->rewards ?? new RewardModel())->find((int) $redemption['reward_id']);
-        $description = $reward === null ? 'Reward redemption #' . $redemptionId : 'Reward: ' . $reward['title'];
+        $description = $reward === null ? 'Penebusan ganjaran #' . $redemptionId : 'Ganjaran: ' . $reward['title'];
         try {
             $transactionId = $transactions->insert([
                 'child_user_id' => $childUserId,
@@ -260,7 +260,7 @@ class PointService
         }
 
         if ($transactionId === false) {
-            throw new PointException('Potongan points reward tidak dapat direkodkan.');
+            throw new PointException('Potongan mata ganjaran tidak dapat direkodkan.');
         }
 
         return ($this->transactions ?? new PointTransactionModel())->find((int) $transactionId);
@@ -292,7 +292,7 @@ class PointService
     {
         if (! ($this->authorization ?? new FamilyAuthorizationService())
             ->parentCanManageChild($parentUserId, $childUserId)) {
-            throw new AuthorizationException('Parent cannot view points for this Child.');
+            throw new AuthorizationException('Ibu bapa tidak boleh melihat mata anak ini.');
         }
 
         return [
@@ -310,7 +310,7 @@ class PointService
         $startDate = $this->localTime($start)->format('Y-m-d');
         $endDate = $this->localTime($end)->format('Y-m-d');
         if ($startDate > $endDate) {
-            throw new PointException('Julat tarikh points tidak sah.');
+            throw new PointException('Julat tarikh mata tidak sah.');
         }
 
         $row = ($this->transactions ?? new PointTransactionModel())
@@ -331,7 +331,7 @@ class PointService
     {
         $child = ($this->users ?? new UserModel())->find($childUserId);
         if ($child === null || ! $child->is_active || $child->roleEnum() !== UserRole::CHILD) {
-            throw new PointException('Identiti Child tidak sah.');
+            throw new PointException('Identiti Anak tidak sah.');
         }
     }
 

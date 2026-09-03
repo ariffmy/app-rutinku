@@ -16,14 +16,14 @@ class ChildController extends BaseController
         $parent = (new AuthService())->currentUser();
 
         return view('parent/children/index', [
-            'title' => 'Children',
+            'title' => 'Anak-anak',
             'children' => (new ChildManagementService())->allForParent((int) $parent->id),
         ]);
     }
 
     public function new(): string
     {
-        return view('parent/children/form', ['title' => 'Tambah Child', 'child' => null, 'profile' => null]);
+        return view('parent/children/form', ['title' => 'Tambah Anak', 'child' => null, 'profile' => null]);
     }
 
     public function create()
@@ -36,7 +36,7 @@ class ChildController extends BaseController
             $parent = (new AuthService())->currentUser();
             (new ChildManagementService())->create((int) $parent->id, $this->payload(false));
 
-            return redirect()->to(route_to('parent.children'))->with('success', 'Child berjaya ditambah.');
+            return redirect()->to(route_to('parent.children'))->with('success', 'Anak berjaya ditambah.');
         } catch (Throwable $exception) {
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
@@ -52,7 +52,7 @@ class ChildController extends BaseController
         }
 
         return view('parent/children/form', [
-            'title' => 'Edit Child',
+            'title' => 'Sunting Anak',
             'child' => $record['user'],
             'profile' => $record['profile'],
         ]);
@@ -68,7 +68,7 @@ class ChildController extends BaseController
             $parent = (new AuthService())->currentUser();
             (new ChildManagementService())->update((int) $parent->id, $childId, $this->payload(true));
 
-            return redirect()->to(route_to('parent.children'))->with('success', 'Profil Child berjaya dikemas kini.');
+            return redirect()->to(route_to('parent.children'))->with('success', 'Profil Anak berjaya dikemas kini.');
         } catch (AuthorizationException) {
             throw PageNotFoundException::forPageNotFound();
         } catch (Throwable $exception) {

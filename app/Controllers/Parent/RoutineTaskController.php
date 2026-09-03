@@ -22,7 +22,7 @@ class RoutineTaskController extends BaseController
         }
 
         return view('parent/routine_tasks/form', [
-            'title' => 'Task baharu',
+            'title' => 'Tugasan baharu',
             'routine' => $routine,
             'task' => null,
             'action' => route_to('parent.routine-tasks.create', $routineId),
@@ -45,7 +45,7 @@ class RoutineTaskController extends BaseController
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Task telah ditambah.');
+        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Tugasan telah ditambah.');
     }
 
     public function edit(int $taskId)
@@ -59,7 +59,7 @@ class RoutineTaskController extends BaseController
         }
 
         return view('parent/routine_tasks/form', [
-            'title' => 'Edit task',
+            'title' => 'Sunting tugasan',
             'routine' => $task['routine'],
             'task' => $task,
             'action' => route_to('parent.routine-tasks.update', $taskId),
@@ -82,7 +82,7 @@ class RoutineTaskController extends BaseController
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Task telah dikemas kini.');
+        return redirect()->to(route_to('parent.routines.edit', $routineId))->with('success', 'Tugasan telah dikemas kini.');
     }
 
     public function delete(int $taskId)
@@ -96,8 +96,8 @@ class RoutineTaskController extends BaseController
         }
 
         $message = $result['action'] === 'archived'
-            ? 'Task telah dinyahaktifkan kerana mempunyai sejarah completion.'
-            : 'Task telah dipadam.';
+            ? 'Tugasan telah dinyahaktifkan kerana mempunyai sejarah penyelesaian.'
+            : 'Tugasan telah dipadam.';
 
         return redirect()->to(route_to('parent.routines.edit', $result['routine_id']))->with('success', $message);
     }

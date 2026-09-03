@@ -42,7 +42,7 @@ class StreakService
         $startDate = $this->localDate($start);
         $endDate = $this->localDate($end);
         if ($startDate > $endDate) {
-            throw new \InvalidArgumentException('Julat tarikh streak tidak sah.');
+            throw new \InvalidArgumentException('Julat tarikh hari berturut-turut tidak sah.');
         }
 
         $perfectDays = 0;

@@ -16,7 +16,7 @@
 </head>
 <body class="child-shell">
 <main class="container py-3 pb-5">
-    <div class="text-end mb-2"><button type="button" class="btn btn-outline-primary btn-sm" data-install-app hidden>Pasang app</button></div>
+    <div class="text-end mb-2"><button type="button" class="btn btn-outline-primary btn-sm" data-install-app hidden>Pasang aplikasi</button></div>
     <?php if (session('success')): ?>
         <div class="alert alert-success" role="status"><?= esc(session('success')) ?></div>
     <?php endif ?>
@@ -25,12 +25,12 @@
     <?php endif ?>
     <?= $this->renderSection('content') ?>
 </main>
-<nav class="child-nav fixed-bottom bg-white border-top" aria-label="Navigasi Child">
+<nav class="child-nav fixed-bottom bg-white border-top" aria-label="Navigasi Anak">
     <div class="container d-flex justify-content-around py-2">
-        <a class="nav-link <?= ($activeNav ?? '') === 'today' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.today') ?>">Today</a>
-        <a class="nav-link <?= ($activeNav ?? '') === 'rewards' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.rewards') ?>">Rewards</a>
-        <a class="nav-link <?= ($activeNav ?? '') === 'progress' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.progress') ?>">Progress</a>
-        <a class="nav-link <?= ($activeNav ?? '') === 'profile' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.profile') ?>">Profile</a>
+        <a class="nav-link <?= ($activeNav ?? '') === 'today' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.today') ?>">Hari Ini</a>
+        <a class="nav-link <?= ($activeNav ?? '') === 'rewards' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.rewards') ?>">Ganjaran</a>
+        <a class="nav-link <?= ($activeNav ?? '') === 'progress' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.progress') ?>">Kemajuan</a>
+        <a class="nav-link <?= ($activeNav ?? '') === 'profile' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.profile') ?>">Profil</a>
     </div>
 </nav>
 <script defer src="<?= base_url('assets/js/app.js') ?>" data-service-worker-url="<?= base_url('service-worker.js') ?>"></script>

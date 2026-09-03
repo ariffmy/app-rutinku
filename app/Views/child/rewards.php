@@ -3,12 +3,12 @@
 <?= $this->section('content') ?>
 <header class="pt-2 mb-4">
     <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($catalogue['family']['name']) ?></p>
-    <h1 class="display-6 fw-bold mb-1">Rewards</h1>
-    <p class="fw-semibold text-primary mb-0">⭐ <?= esc($catalogue['balance']) ?> points tersedia</p>
+    <h1 class="display-6 fw-bold mb-1">Ganjaran</h1>
+    <p class="fw-semibold text-primary mb-0">⭐ <?= esc($catalogue['balance']) ?> mata tersedia</p>
 </header>
 
 <?php if ($catalogue['rewards'] === []): ?>
-    <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 text-center"><div class="display-5 mb-2">🎁</div><h2 class="h4">Belum ada reward</h2><p class="text-secondary mb-0">Parent akan menambah reward di sini.</p></div></div>
+    <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 text-center"><div class="display-5 mb-2">🎁</div><h2 class="h4">Belum ada ganjaran</h2><p class="text-secondary mb-0">Ibu bapa akan menambah ganjaran di sini.</p></div></div>
 <?php else: ?>
     <div class="row g-3">
         <?php foreach ($catalogue['rewards'] as $reward): ?>
@@ -18,11 +18,11 @@
                 <?php if ($reward['description']): ?><p class="text-secondary"><?= esc($reward['description']) ?></p><?php endif ?>
                 <p class="h5 text-primary">⭐ <?= esc($reward['points_required']) ?></p>
                 <?php if ($reward['has_pending_request']): ?>
-                    <button class="btn btn-warning w-100" disabled>Menunggu Parent</button>
+                    <button class="btn btn-warning w-100" disabled>Menunggu Ibu bapa</button>
                 <?php elseif (! $reward['can_afford']): ?>
-                    <button class="btn btn-outline-secondary w-100" disabled>Points belum cukup</button>
+                    <button class="btn btn-outline-secondary w-100" disabled>Mata belum cukup</button>
                 <?php else: ?>
-                    <form action="<?= route_to('child.rewards.redeem', $reward['id']) ?>" method="post"><?= csrf_field() ?><button class="btn btn-primary w-100" type="submit">Redeem reward</button></form>
+                    <form action="<?= route_to('child.rewards.redeem', $reward['id']) ?>" method="post"><?= csrf_field() ?><button class="btn btn-primary w-100" type="submit">Tebus ganjaran</button></form>
                 <?php endif ?>
             </div></article></div>
         <?php endforeach ?>
@@ -30,9 +30,9 @@
 <?php endif ?>
 
 <?php if ($catalogue['redemptions'] !== []): ?>
-    <section class="mt-4" aria-labelledby="request-history-heading"><h2 id="request-history-heading" class="h4 mb-3">Request saya</h2><div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="list-group list-group-flush">
+    <section class="mt-4" aria-labelledby="request-history-heading"><h2 id="request-history-heading" class="h4 mb-3">Permohonan saya</h2><div class="card border-0 shadow-sm rounded-4 overflow-hidden"><div class="list-group list-group-flush">
         <?php foreach ($catalogue['redemptions'] as $redemption): ?>
-            <div class="list-group-item d-flex justify-content-between gap-3 p-3"><div><div class="fw-semibold"><?= esc($redemption['reward_title']) ?></div><div class="small text-secondary"><?= esc($redemption['requested_at']) ?></div></div><span class="badge align-self-start <?= $redemption['status'] === 'approved' ? 'text-bg-success' : ($redemption['status'] === 'rejected' ? 'text-bg-danger' : 'text-bg-warning') ?>"><?= esc(ucfirst($redemption['status'])) ?></span></div>
+            <div class="list-group-item d-flex justify-content-between gap-3 p-3"><div><div class="fw-semibold"><?= esc($redemption['reward_title']) ?></div><div class="small text-secondary"><?= esc($redemption['requested_at']) ?></div></div><span class="badge align-self-start <?= $redemption['status'] === 'approved' ? 'text-bg-success' : ($redemption['status'] === 'rejected' ? 'text-bg-danger' : 'text-bg-warning') ?>"><?= esc(ui_label('redemption', $redemption['status'])) ?></span></div>
         <?php endforeach ?>
     </div></div></section>
 <?php endif ?>

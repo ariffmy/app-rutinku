@@ -18,7 +18,7 @@ class ProgressController extends BaseController
         $points = new PointService();
 
         return view('child/progress', [
-            'title' => 'Progress',
+            'title' => 'Kemajuan',
             'child' => $context->child(),
             'family' => $context->family(),
             'progress' => (new TaskCompletionService())->getTodayProgress(

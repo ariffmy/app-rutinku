@@ -28,7 +28,7 @@ class ReportController extends BaseController
         $report = (new ReportService())->{$period}((int) $parent->id, $date);
 
         return view('parent/reports/index', [
-            'title' => 'Reports',
+            'title' => 'Laporan',
             'period' => $period,
             'dateInput' => $dateInput,
             'report' => $report,

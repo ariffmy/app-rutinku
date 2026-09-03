@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'rutinku-static-v3';
+const STATIC_CACHE = 'rutinku-static-v4';
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',

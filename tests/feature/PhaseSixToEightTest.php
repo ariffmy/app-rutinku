@@ -313,7 +313,7 @@ final class PhaseSixToEightTest extends CIUnitTestCase
         $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $rewardPage->response()->getBody());
         $rankingPage = $this->withSession($session)->get('/ranking?period=daily&date=' . $this->today()->format('Y-m-d'));
         $rankingPage->assertOK();
-        $rankingPage->assertSee('Parent-only ranking');
+        $rankingPage->assertSee('Kedudukan untuk ibu bapa sahaja');
         $this->assertNotNull((new RewardModel())->find($rewardId));
     }
 

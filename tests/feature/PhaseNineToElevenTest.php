@@ -108,7 +108,7 @@ final class PhaseNineToElevenTest extends CIUnitTestCase
         $page = $this->withSession($this->parentSession($parentId))->get('/reports?period=daily&date=' . $this->today()->format('Y-m-d'));
 
         $page->assertOK();
-        $page->assertSee('Laporan progress keluarga');
+        $page->assertSee('Laporan kemajuan keluarga');
         $this->assertStringNotContainsString('<script>reportAttack()</script>', $page->response()->getBody());
         $this->assertStringContainsString('&lt;script&gt;reportAttack()&lt;/script&gt;', $page->response()->getBody());
         service('session')->destroy();

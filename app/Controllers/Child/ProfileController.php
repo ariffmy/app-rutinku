@@ -19,7 +19,7 @@ class ProfileController extends BaseController
         $childId = (int) $child->id;
 
         return view('child/profile', [
-            'title' => 'Profile',
+            'title' => 'Profil',
             'activeNav' => 'profile',
             'child' => $child,
             'family' => $context->family(),

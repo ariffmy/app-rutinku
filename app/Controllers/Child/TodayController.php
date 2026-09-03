@@ -20,7 +20,7 @@ class TodayController extends BaseController
         );
 
         return view('child/today', [
-            'title' => 'Today',
+            'title' => 'Hari Ini',
             'child' => $context->child(),
             'family' => $context->family(),
             'schedule' => $schedule,

@@ -13,7 +13,7 @@ class LoginController extends BaseController
             return redirect()->to(route_to('parent.dashboard'));
         }
 
-        return view('auth/login', ['title' => 'Log Masuk Parent']);
+        return view('auth/login', ['title' => 'Log Masuk Ibu bapa']);
     }
 
     public function login()

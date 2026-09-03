@@ -20,6 +20,15 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function validation(?Validation $config = null, bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('validation', $config);
+        }
+
+        return new \App\Validation\LocalizedValidation($config ?? config(Validation::class), static::get('renderer'));
+    }
+
     public static function trustedChildContext(bool $getShared = true): TrustedChildContext
     {
         if ($getShared) {

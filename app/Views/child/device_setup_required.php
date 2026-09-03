@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#345995">
-    <title>Device Setup Required · RutinKu</title>
+    <title>Peranti Perlu Disediakan · RutinKu</title>
     <link href="<?= base_url('assets/vendor/bootstrap-5.3.3.min.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/app.css') ?>" rel="stylesheet">
 </head>
@@ -14,8 +14,8 @@
         <div class="card-body p-4 p-sm-5">
             <div class="display-5 mb-3" aria-hidden="true">🔒</div>
             <p class="brand-mark mb-2">RutinKu</p>
-            <h1 class="h3">Device Setup Required</h1>
-            <p class="text-secondary mb-0">Please ask a parent to set up this device.</p>
+            <h1 class="h3">Peranti Perlu Disediakan</h1>
+            <p class="text-secondary mb-0">Sila minta ibu bapa menyediakan peranti ini.</p>
         </div>
     </div>
 </main>

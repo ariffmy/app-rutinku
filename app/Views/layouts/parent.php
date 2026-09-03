@@ -17,16 +17,16 @@
 <body class="parent-shell">
 <?php
 $navigation = [
-    ['Dashboard', 'parent.dashboard', url_is('dashboard')],
-    ['Children', 'parent.children', url_is('children*')],
-    ['Routines', 'parent.routines', url_is('routines*') || url_is('routine-tasks*')],
-    ['Points', 'parent.points', url_is('points*')],
-    ['Rewards', 'parent.rewards', url_is('rewards*') || url_is('reward-redemptions*')],
-    ['Ranking', 'parent.ranking', url_is('ranking*')],
-    ['Reports', 'parent.reports', url_is('reports*')],
+    ['Papan Pemuka', 'parent.dashboard', url_is('dashboard')],
+    ['Anak-anak', 'parent.children', url_is('children*')],
+    ['Rutin', 'parent.routines', url_is('routines*') || url_is('routine-tasks*')],
+    ['Mata', 'parent.points', url_is('points*')],
+    ['Ganjaran', 'parent.rewards', url_is('rewards*') || url_is('reward-redemptions*')],
+    ['Kedudukan', 'parent.ranking', url_is('ranking*')],
+    ['Laporan', 'parent.reports', url_is('reports*')],
 ];
 ?>
-<nav class="parent-nav bg-white border-bottom sticky-top" aria-label="Navigasi Parent" data-parent-nav>
+<nav class="parent-nav bg-white border-bottom sticky-top" aria-label="Navigasi Ibu bapa" data-parent-nav>
     <div class="container-xl parent-nav-layout">
         <a class="navbar-brand fw-bold text-primary" href="<?= route_to('parent.dashboard') ?>">RutinKu</a>
         <button type="button" class="btn btn-outline-primary parent-menu-toggle" aria-controls="parent-nav-panel" aria-expanded="false" data-parent-menu-toggle hidden>
@@ -40,7 +40,7 @@ $navigation = [
                 <?php endforeach ?>
             </ul>
             <div class="parent-nav-actions">
-                <button type="button" class="btn btn-outline-primary btn-sm" data-install-app hidden>Pasang app</button>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-install-app hidden>Pasang aplikasi</button>
                 <form action="<?= route_to('parent.logout') ?>" method="post">
                     <?= csrf_field() ?>
                     <button type="submit" class="btn btn-outline-secondary btn-sm">Log keluar</button>

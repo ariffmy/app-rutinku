@@ -18,13 +18,13 @@ class RewardController extends BaseController
         $parent = (new AuthService())->currentUser();
         $data = (new RewardService())->listForParent((int) $parent->id);
 
-        return view('parent/rewards/index', ['title' => 'Rewards'] + $data);
+        return view('parent/rewards/index', ['title' => 'Ganjaran'] + $data);
     }
 
     public function new(): string
     {
         return view('parent/rewards/form', [
-            'title' => 'Reward baharu',
+            'title' => 'Ganjaran baharu',
             'reward' => null,
             'action' => route_to('parent.rewards.create'),
         ]);
@@ -44,7 +44,7 @@ class RewardController extends BaseController
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.rewards'))->with('success', 'Reward telah dicipta.');
+        return redirect()->to(route_to('parent.rewards'))->with('success', 'Ganjaran telah dicipta.');
     }
 
     public function edit(int $rewardId): string
@@ -57,7 +57,7 @@ class RewardController extends BaseController
         }
 
         return view('parent/rewards/form', [
-            'title' => 'Edit reward',
+            'title' => 'Sunting ganjaran',
             'reward' => $reward,
             'action' => route_to('parent.rewards.update', $rewardId),
         ]);
@@ -77,7 +77,7 @@ class RewardController extends BaseController
             return redirect()->back()->withInput()->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.rewards'))->with('success', 'Reward telah dikemas kini.');
+        return redirect()->to(route_to('parent.rewards'))->with('success', 'Ganjaran telah dikemas kini.');
     }
 
     public function archive(int $rewardId)
@@ -89,7 +89,7 @@ class RewardController extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
-        return redirect()->to(route_to('parent.rewards'))->with('success', 'Reward telah dinyahaktifkan.');
+        return redirect()->to(route_to('parent.rewards'))->with('success', 'Ganjaran telah dinyahaktifkan.');
     }
 
     public function approve(int $redemptionId)
@@ -103,7 +103,7 @@ class RewardController extends BaseController
             return redirect()->to(route_to('parent.rewards'))->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.rewards'))->with('success', 'Reward redemption telah diluluskan.');
+        return redirect()->to(route_to('parent.rewards'))->with('success', 'Penebusan ganjaran telah diluluskan.');
     }
 
     public function reject(int $redemptionId)
@@ -117,7 +117,7 @@ class RewardController extends BaseController
             return redirect()->to(route_to('parent.rewards'))->with('error', $exception->getMessage());
         }
 
-        return redirect()->to(route_to('parent.rewards'))->with('success', 'Reward redemption telah ditolak.');
+        return redirect()->to(route_to('parent.rewards'))->with('success', 'Penebusan ganjaran telah ditolak.');
     }
 
     private function rules(): array

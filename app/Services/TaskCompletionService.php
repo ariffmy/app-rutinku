@@ -50,7 +50,7 @@ class TaskCompletionService
                 ->where('routine_task_id', $routineTaskId)
                 ->where('completion_date', $local->format('Y-m-d'))
                 ->first() !== null) {
-                throw new TaskCompletionException('Task ini sudah disiapkan hari ini.');
+                throw new TaskCompletionException('Tugasan ini sudah disiapkan hari ini.');
             }
 
             $completionId = $completions->insert([
@@ -62,7 +62,7 @@ class TaskCompletionService
             ], true);
 
             if ($completionId === false) {
-                throw new TaskCompletionException('Task tidak dapat ditandakan selesai.');
+                throw new TaskCompletionException('Tugasan tidak dapat ditandakan selesai.');
             }
 
             ($this->points ?? new PointService(db: $this->db))->awardTaskPoints(
@@ -77,7 +77,7 @@ class TaskCompletionService
         } catch (Throwable $exception) {
             $this->db->transRollback();
             if ($this->isDuplicateError($exception)) {
-                throw new TaskCompletionException('Task ini sudah disiapkan hari ini.', 0, $exception);
+                throw new TaskCompletionException('Tugasan ini sudah disiapkan hari ini.', 0, $exception);
             }
             throw $exception;
         }
@@ -101,7 +101,7 @@ class TaskCompletionService
                 ->first();
 
             if ($completion === null) {
-                throw new TaskCompletionException('Task ini belum disiapkan hari ini atau tidak boleh dibatalkan.');
+                throw new TaskCompletionException('Tugasan ini belum disiapkan hari ini atau tidak boleh dibatalkan.');
             }
 
             ($this->points ?? new PointService(db: $this->db))->reverseTaskPoints(
@@ -112,7 +112,7 @@ class TaskCompletionService
             );
 
             if (! $completions->delete((int) $completion['id'])) {
-                throw new TaskCompletionException('Completion tidak dapat dibatalkan.');
+                throw new TaskCompletionException('Penyelesaian tidak dapat dibatalkan.');
             }
 
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
@@ -121,7 +121,7 @@ class TaskCompletionService
                 $childUserId,
                 'task_completion',
                 (int) $completion['id'],
-                'Child membatalkan completion pada hari yang sama.',
+                'Anak membatalkan penyelesaian pada hari yang sama.',
                 [
                     'routine_task_id' => (int) $completion['routine_task_id'],
                     'completion_date' => $completion['completion_date'],
@@ -190,12 +190,12 @@ class TaskCompletionService
     {
         $task = ($this->routineTasks ?? new RoutineTaskModel())->find($routineTaskId);
         if ($task === null || ! (bool) $task['is_active']) {
-            throw new TaskCompletionException('Task ini tidak tersedia.');
+            throw new TaskCompletionException('Tugasan ini tidak tersedia.');
         }
 
         $routine = ($this->routines ?? new RoutineModel())->find((int) $task['routine_id']);
         if ($routine === null || ! (bool) $routine['is_active'] || (int) $routine['child_user_id'] !== $childUserId) {
-            throw new TaskCompletionException('Task ini tidak tersedia.');
+            throw new TaskCompletionException('Tugasan ini tidak tersedia.');
         }
 
         $scheduled = ($this->routineDays ?? new RoutineDayModel())
@@ -203,7 +203,7 @@ class TaskCompletionService
             ->where('day_of_week', $weekday)
             ->first();
         if ($scheduled === null) {
-            throw new TaskCompletionException('Task ini tidak dijadualkan hari ini.');
+            throw new TaskCompletionException('Tugasan ini tidak dijadualkan hari ini.');
         }
 
         return $task;
@@ -213,7 +213,7 @@ class TaskCompletionService
     {
         $child = ($this->users ?? new UserModel())->find($childUserId);
         if ($child === null || ! $child->is_active || $child->roleEnum() !== UserRole::CHILD) {
-            throw new TaskCompletionException('Identiti Child tidak sah.');
+            throw new TaskCompletionException('Identiti Anak tidak sah.');
         }
     }
 

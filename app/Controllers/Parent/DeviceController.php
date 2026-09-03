@@ -86,6 +86,6 @@ class DeviceController extends BaseController
         }
 
         return redirect()->to(route_to('parent.child.devices', $childId))
-            ->with('success', $count > 0 ? 'Semua trusted device telah direset.' : 'Tiada trusted device aktif untuk direset.');
+            ->with('success', $count > 0 ? 'Semua peranti dipercayai telah ditetapkan semula.' : 'Tiada peranti dipercayai aktif untuk ditetapkan semula.');
     }
 }

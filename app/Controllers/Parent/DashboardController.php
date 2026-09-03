@@ -27,7 +27,7 @@ class DashboardController extends BaseController
             ->countAllResults();
 
         return view('parent/dashboard', [
-            'title' => 'Dashboard',
+            'title' => 'Papan Pemuka',
             'currentUser' => $auth->currentUser(),
             'family' => $family,
             'children' => (new FamilyService())->children((int) $family['id']),

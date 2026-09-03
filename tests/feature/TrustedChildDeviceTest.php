@@ -80,7 +80,7 @@ final class TrustedChildDeviceTest extends CIUnitTestCase
         $response->assertOK();
         $response->assertSee('Hai, Child One');
         $response->assertDontSee('Child Two');
-        $response->assertDontSee('Ranking');
+        $response->assertDontSee('Kedudukan');
         $response->assertDontSee('Log keluar');
         $this->assertSame($childId, (int) Services::trustedChildContext()->child()->id);
 
@@ -99,7 +99,7 @@ final class TrustedChildDeviceTest extends CIUnitTestCase
         $response = $this->get('/child/today');
 
         $response->assertStatus(401);
-        $response->assertSee('Device Setup Required');
+        $response->assertSee('Peranti Perlu Disediakan');
         $response->assertCookie(ChildDeviceService::COOKIE_NAME);
         $this->assertLessThan(time(), $response->response()->getCookie(ChildDeviceService::COOKIE_NAME)->getExpiresTimestamp());
         $this->assertFalse(Services::trustedChildContext()->isResolved());
@@ -113,8 +113,8 @@ final class TrustedChildDeviceTest extends CIUnitTestCase
         $response = $this->get('/child/today');
 
         $response->assertStatus(401);
-        $response->assertSee('Please ask a parent to set up this device.');
-        $response->assertDontSee('Log Masuk Parent');
+        $response->assertSee('Sila minta ibu bapa menyediakan peranti ini.');
+        $response->assertDontSee('Log Masuk Ibu bapa');
     }
 
     public function testChildOrOutsideFamilyParentCannotProvisionDevice(): void

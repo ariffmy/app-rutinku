@@ -27,7 +27,7 @@ class RankingController extends BaseController
         $ranking = (new RankingService())->{$period}((int) $parent->id, $date);
 
         return view('parent/ranking/index', [
-            'title' => 'Ranking',
+            'title' => 'Kedudukan',
             'period' => $period,
             'dateInput' => $dateInput,
             'ranking' => $ranking,
