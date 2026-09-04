@@ -14,6 +14,8 @@
     <link href="<?= base_url('assets/vendor/bootstrap-5.3.3.min.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/app.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/buttons.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/vendor/fontawesome/css/fontawesome.min.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/vendor/fontawesome/css/solid.min.css') ?>" rel="stylesheet">
 </head>
 <body class="parent-shell">
 <?php

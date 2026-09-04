@@ -1,5 +1,22 @@
 <?php
 
+/** Version local assets by content so an existing PWA cannot reuse an older build. */
+function ui_asset_url(string $path): string
+{
+    $file = FCPATH . $path;
+    return base_url($path) . (is_file($file) ? '?v=' . substr(hash_file('sha256', $file), 0, 12) : '');
+}
+
+function ui_icon(string $name, string $label = ''): string
+{
+    $icons = ['star', 'fire', 'gift', 'lightbulb', 'clock', 'check', 'arrow-left', 'bars', 'lock', 'user', 'cat', 'robot', 'rocket', 'sun'];
+    if (! in_array($name, $icons, true)) {
+        return '';
+    }
+    return '<i class="fa-solid fa-' . $name . ' ui-icon" aria-hidden="true"></i>'
+        . ($label === '' ? '' : '<span class="visually-hidden">' . esc($label) . '</span>');
+}
+
 /** Display local wall-clock times without changing stored schedule values. */
 function ui_time(?string $time): string
 {
@@ -23,6 +40,30 @@ function ui_time(?string $time): string
 }
 
 /** Database timestamps are stored in the application's local timezone. */
+function ui_avatar_options(): array
+{
+    return ['user' => 'Kawan', 'cat' => 'Kucing', 'robot' => 'Robot', 'rocket' => 'Roket'];
+}
+
+function ui_image_url(?string $name, bool $child = false): ?string
+{
+    return preg_match('/\A[a-f0-9]{32}\.jpg\z/', $name ?? '')
+        ? route_to($child ? 'child.image' : 'parent.image', $name) : null;
+}
+
+function ui_avatar(?string $avatar, bool $child = true): string
+{
+    $url = ui_image_url($avatar, $child);
+    return $url !== null ? '<img class="profile-avatar" src="' . esc($url, 'attr') . '" alt="Gambar profil">'
+        : '<span class="profile-avatar avatar-placeholder" role="img" aria-label="Avatar">' . ui_icon(array_key_exists($avatar ?? '', ui_avatar_options()) ? $avatar : 'user') . '</span>';
+}
+
+function ui_date(?string $value): string
+{
+    $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value ?? '', new \DateTimeZone(app_timezone()));
+    return $date !== false && $date->format('Y-m-d') === $value ? $date->format('d/m/Y') : '—';
+}
+
 function ui_datetime(?string $value): string
 {
     if (! $value) {
@@ -53,7 +94,7 @@ function ui_task_schedule(array $task): string
 {
     $label = ['inherit' => 'Ikut rutin', 'once' => 'Sekali pada hari rutin', 'daily' => 'Ikut rutin mulai tarikh', 'weekly' => 'Hari tertentu dalam rutin', 'monthly' => 'Bulanan pada hari rutin'][$task['schedule_type'] ?? 'inherit'] ?? 'Ikut rutin';
     if (! empty($task['start_date'])) {
-        $label .= ' · ' . $task['start_date'];
+        $label .= ' · ' . ui_date($task['start_date']);
     }
     if (($task['schedule_type'] ?? '') === 'weekly') {
         $names = [1 => 'Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab', 'Ahd'];

@@ -6,6 +6,25 @@ use CodeIgniter\Test\CIUnitTestCase;
 
 final class UiLanguageTest extends CIUnitTestCase
 {
+    public function testChildAssetsHaveContentVersions(): void
+    {
+        $path = 'assets/js/child-today.js';
+        $this->assertStringEndsWith('?v=' . substr(hash_file('sha256', FCPATH . $path), 0, 12), ui_asset_url($path));
+        $view = file_get_contents(APPPATH . 'Views/child/today.php');
+        $this->assertStringContainsString("ui_asset_url('assets/js/child-today.js')", $view);
+        $this->assertStringContainsString('data-filter-clock', $view);
+    }
+
+    public function testMalaysianDatesAndTimes(): void
+    {
+        $this->assertSame('04/09/2026', ui_date('2026-09-04'));
+        $this->assertSame('—', ui_date('2026-02-30'));
+        $this->assertSame('—', ui_date(null));
+        $this->assertSame('04/09/2026, 8 pagi', ui_datetime('2026-09-04 08:00:00'));
+        $this->assertSame('04/09/2026, 8:30 malam', ui_datetime('2026-09-04 20:30:00'));
+        $this->assertStringContainsString('04/09/2026', ui_task_schedule(['schedule_type' => 'once', 'start_date' => '2026-09-04']));
+    }
+
     public function testStoredEnumValuesHaveMalayDisplayLabels(): void
     {
         $this->assertSame('Menunggu kelulusan', ui_label('redemption', 'pending'));

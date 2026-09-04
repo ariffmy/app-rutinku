@@ -69,6 +69,12 @@
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn btn-outline-danger">Batalkan Akses Peranti</button>
                                 </form>
+                            <?php else: ?>
+                                <form action="<?= route_to('parent.child.devices.delete', $child->id, $device['id']) ?>" method="post" class="align-self-md-center">
+                                    <?= csrf_field() ?>
+                                    <label class="d-block small mb-2"><input type="checkbox" required> Saya sahkan pemadaman kekal rekod ini.</label>
+                                    <button type="submit" class="btn btn-outline-danger">Padam rekod peranti</button>
+                                </form>
                             <?php endif ?>
                         </div>
                     </article>

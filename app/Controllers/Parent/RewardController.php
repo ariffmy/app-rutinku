@@ -70,6 +70,7 @@ class RewardController extends BaseController
         }
         $parent = (new AuthService())->currentUser();
         try {
+            (new RewardService())->getForParent((int) $parent->id, $rewardId);
             (new RewardService())->update((int) $parent->id, $rewardId, $this->input());
         } catch (AuthorizationException) {
             throw PageNotFoundException::forPageNotFound();
@@ -124,21 +125,24 @@ class RewardController extends BaseController
     {
         return [
             'title' => 'required|max_length[160]',
-            'description' => 'permit_empty|max_length[5000]',
+            'category' => 'permit_empty|max_length[80]',
             'points_required' => 'required|is_natural_no_zero|less_than_equal_to[1000000]',
-            'image' => 'permit_empty|max_length[255]',
             'is_active' => 'required|in_list[0,1]',
         ];
     }
 
     private function input(): array
     {
-        return [
+        $data = [
             'title' => $this->request->getPost('title'),
-            'description' => $this->request->getPost('description'),
+            'category' => $this->request->getPost('category'),
             'points_required' => $this->request->getPost('points_required'),
-            'image' => $this->request->getPost('image'),
             'is_active' => $this->request->getPost('is_active'),
         ];
+        $image = (new \App\Services\ImageUploadService())->store($this->request->getFile('image_upload'), (int) (new AuthService())->currentFamily()['id']);
+        if ($image !== null) {
+            $data['image'] = $image;
+        }
+        return $data;
     }
 }

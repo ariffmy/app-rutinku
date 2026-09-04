@@ -40,7 +40,6 @@
                             </div>
                             <span class="badge align-self-start <?= $routine['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $routine['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
                         </div>
-                        <?php if ($routine['description']): ?><p class="text-secondary"><?= esc($routine['description']) ?></p><?php endif ?>
                         <div class="d-flex flex-wrap gap-1 mb-3">
                             <?php foreach ($routine['days'] as $day): ?>
                                 <span class="badge text-bg-light border"><?= esc($dayNames[$day]) ?></span>

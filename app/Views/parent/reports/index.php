@@ -26,14 +26,14 @@
 </form>
 
 <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
-    <h2 class="h4 mb-0"><?= esc(ui_label('period', $period)) ?> · <?= esc($report['start_date']) ?><?= $report['start_date'] !== $report['end_date'] ? ' hingga ' . esc($report['end_date']) : '' ?></h2>
+    <h2 class="h4 mb-0"><?= esc(ui_label('period', $period)) ?> · <?= esc(ui_date($report['start_date'])) ?><?= $report['start_date'] !== $report['end_date'] ? ' hingga ' . esc(ui_date($report['end_date'])) : '' ?></h2>
     <?php if ($report['is_future']): ?><span class="badge text-bg-light border">Tempoh akan datang</span><?php endif ?>
 </div>
 
 <section class="row g-3 mb-4" aria-label="Ringkasan laporan">
     <div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Tugasan Selesai</p><p class="h3 mb-0"><?= esc($report['total_completed_tasks']) ?> / <?= esc($report['total_scheduled_tasks']) ?></p></div></div></div>
     <div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Penyelesaian</p><p class="h3 mb-0"><?= esc($report['completion_percentage']) ?>%</p></div></div></div>
-    <div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Mata Diperoleh</p><p class="h3 mb-0">⭐ <?= esc($report['total_earned_points']) ?></p></div></div></div>
+    <div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Mata Diperoleh</p><p class="h3 mb-0"><?= ui_icon('star') ?> <?= esc($report['total_earned_points']) ?></p></div></div></div>
     <div class="col-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Hari Sempurna</p><p class="h3 mb-0"><?= esc($report['total_perfect_days']) ?></p></div></div></div>
 </section>
 
@@ -49,10 +49,10 @@
                 <td><?= esc($row['completed_tasks']) ?> / <?= esc($row['scheduled_tasks']) ?></td>
                 <td><?= esc($row['required_completed_tasks']) ?> / <?= esc($row['required_scheduled_tasks']) ?></td>
                 <td><?= esc($row['completion_percentage']) ?>%</td>
-                <td>⭐ <?= esc($row['earned_points']) ?></td>
+                <td><?= ui_icon('star') ?> <?= esc($row['earned_points']) ?></td>
                 <td><?= esc($row['perfect_days']) ?></td>
                 <td><?= esc($row['current_balance']) ?></td>
-                <td>🔥 <?= esc($row['current_streak']) ?></td>
+                <td><?= ui_icon('fire') ?> <?= esc($row['current_streak']) ?></td>
             </tr><?php endforeach ?></tbody>
         </table></div></div>
     <?php endif ?>
@@ -64,7 +64,7 @@
     <div class="card border-0 shadow-sm overflow-hidden"><div class="table-responsive"><table class="table align-middle mb-0">
         <thead><tr><th>Tarikh</th><th>Tugasan</th><th>Penyelesaian</th><th>Mata Diperoleh</th><th>Anak dengan Hari Sempurna</th></tr></thead>
         <tbody><?php foreach ($report['daily_breakdown'] as $day): ?><tr>
-            <td><?= esc($day['date']) ?></td><td><?= esc($day['completed_tasks']) ?> / <?= esc($day['scheduled_tasks']) ?></td><td><?= esc($day['completion_percentage']) ?>%</td><td>⭐ <?= esc($day['earned_points']) ?></td><td><?= esc($day['perfect_children']) ?></td>
+            <td><?= esc(ui_date($day['date'])) ?></td><td><?= esc($day['completed_tasks']) ?> / <?= esc($day['scheduled_tasks']) ?></td><td><?= esc($day['completion_percentage']) ?>%</td><td><?= ui_icon('star') ?> <?= esc($day['earned_points']) ?></td><td><?= esc($day['perfect_children']) ?></td>
         </tr><?php endforeach ?></tbody>
     </table></div></div>
 </section>

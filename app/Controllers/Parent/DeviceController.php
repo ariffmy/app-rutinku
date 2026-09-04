@@ -75,6 +75,19 @@ class DeviceController extends BaseController
         return redirect()->to(route_to('parent.child.devices', $childId))->with('success', $message);
     }
 
+    public function delete(int $childId, int $deviceId)
+    {
+        try {
+            (new ChildDeviceService())->deleteInactive((int) (new AuthService())->currentUser()->id, $childId, $deviceId);
+        } catch (AuthorizationException) {
+            throw PageNotFoundException::forPageNotFound();
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->to(route_to('parent.child.devices', $childId))->with('error', $exception->getMessage());
+        }
+        return redirect()->to(route_to('parent.child.devices', $childId))
+            ->with('success', 'Rekod peranti tidak aktif telah dipadam. Sejarah audit dikekalkan.');
+    }
+
     public function reset(int $childId)
     {
         $parent = (new AuthService())->currentUser();

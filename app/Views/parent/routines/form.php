@@ -51,18 +51,6 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                 <input id="name" name="name" class="form-control" maxlength="120" required value="<?= esc(old('name') ?? ($routine['name'] ?? '')) ?>" placeholder="Contoh: Rutin Pagi">
             </div>
             <div class="col-12">
-                <label for="description" class="form-label">Penerangan</label>
-                <textarea id="description" name="description" class="form-control" rows="3" maxlength="5000"><?= esc(old('description') ?? ($routine['description'] ?? '')) ?></textarea>
-            </div>
-            <div class="col-12 col-md-6">
-                <label for="type" class="form-label">Jenis</label>
-                <input id="type" name="type" class="form-control" maxlength="50" value="<?= esc(old('type') ?? ($routine['type'] ?? '')) ?>" placeholder="Pagi, Sekolah, Petang">
-            </div>
-            <div class="col-12 col-md-6">
-                <label for="sort_order" class="form-label">Susunan</label>
-                <input id="sort_order" name="sort_order" type="number" min="0" max="9999" class="form-control" required value="<?= esc(old('sort_order') ?? ($routine['sort_order'] ?? 0)) ?>">
-            </div>
-            <div class="col-12">
                 <fieldset>
                     <legend class="form-label">Hari rutin</legend>
                     <p class="small text-secondary">Jadual utama untuk semua tugasan dalam rutin ini. Tugasan tidak akan muncul di luar hari yang dipilih.</p>
@@ -110,12 +98,16 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                                 <div class="small text-secondary"><?= esc(ui_task_time($task)) ?> · <?= esc($task['points']) ?> mata</div>
                                 <div class="small text-secondary"><?= esc(ui_task_schedule($task)) ?></div>
                             </div>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex flex-wrap align-items-start gap-2 task-row-actions">
                                 <a href="<?= route_to('parent.routine-tasks.edit', $task['id']) ?>" class="btn btn-outline-primary">Sunting</a>
+                                <?php if ($task['is_active']): ?>
                                 <form action="<?= route_to('parent.routine-tasks.delete', $task['id']) ?>" method="post">
                                     <?= csrf_field() ?>
-                                    <button type="submit" class="btn btn-outline-danger">Padam / nyahaktif</button>
+                                    <button type="submit" class="btn btn-outline-danger">Nyahaktif</button>
                                 </form>
+                                <?php else: ?>
+                                    <span class="small text-secondary align-self-center">Sunting untuk aktifkan semula</span>
+                                <?php endif ?>
                             </div>
                         </div>
                     </article>

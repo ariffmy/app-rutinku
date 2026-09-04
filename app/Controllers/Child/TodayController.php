@@ -5,7 +5,6 @@ namespace App\Controllers\Child;
 use App\Controllers\BaseController;
 use App\Services\TaskCompletionService;
 use App\Services\PointService;
-use App\Services\StreakService;
 use CodeIgniter\I18n\Time;
 use Config\Services;
 
@@ -25,10 +24,7 @@ class TodayController extends BaseController
             'family' => $context->family(),
             'schedule' => $schedule,
             'balance' => (new PointService())->getBalance((int) $context->child()->id),
-            'currentStreak' => (new StreakService())->currentStreak(
-                (int) $context->child()->id,
-                Time::now(app_timezone()),
-            ),
+            'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),
             'activeNav' => 'today',
         ]);
     }

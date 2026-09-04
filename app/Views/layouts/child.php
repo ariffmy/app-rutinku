@@ -12,8 +12,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="<?= base_url('assets/icons/icon-192.png') ?>">
     <link rel="apple-touch-icon" href="<?= base_url('assets/icons/apple-touch-icon.png') ?>">
     <link href="<?= base_url('assets/vendor/bootstrap-5.3.3.min.css') ?>" rel="stylesheet">
-    <link href="<?= base_url('assets/css/app.css') ?>" rel="stylesheet">
+    <link href="<?= ui_asset_url('assets/css/app.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/css/buttons.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/vendor/fontawesome/css/fontawesome.min.css') ?>" rel="stylesheet">
+    <link href="<?= base_url('assets/vendor/fontawesome/css/solid.min.css') ?>" rel="stylesheet">
 </head>
 <body class="child-shell">
 <main class="container py-3 pb-5">
@@ -34,6 +36,7 @@
         <a class="nav-link <?= ($activeNav ?? '') === 'profile' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.profile') ?>">Profil</a>
     </div>
 </nav>
-<script defer src="<?= base_url('assets/js/app.js') ?>" data-service-worker-url="<?= base_url('service-worker.js') ?>"></script>
+<script defer src="<?= ui_asset_url('assets/js/app.js') ?>" data-service-worker-url="<?= base_url('service-worker.js') ?>"></script>
+<?= $this->renderSection('scripts') ?>
 </body>
 </html>

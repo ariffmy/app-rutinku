@@ -1,11 +1,16 @@
-const STATIC_CACHE = 'rutinku-static-v10';
+const STATIC_CACHE = 'rutinku-static-v13';
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',
   '/assets/vendor/bootstrap-5.3.3.min.css',
   '/assets/css/app.css',
   '/assets/css/buttons.css',
+  '/assets/vendor/fontawesome/css/fontawesome.min.css',
+  '/assets/vendor/fontawesome/css/solid.min.css',
+  '/assets/vendor/fontawesome/webfonts/fa-solid-900.woff2',
+  '/assets/vendor/fontawesome/webfonts/fa-solid-900.ttf',
   '/assets/js/app.js',
+  '/assets/js/child-today.js',
   '/assets/js/task-form.js',
   '/assets/css/task-form.css',
   '/assets/icons/icon-192.png',

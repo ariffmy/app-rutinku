@@ -1,60 +1,56 @@
 <?= $this->extend('layouts/child') ?>
-
 <?= $this->section('content') ?>
-<header class="pt-2 mb-4">
-    <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($family['name']) ?></p>
-    <h1 class="display-6 fw-bold mb-1">Hai, <?= esc($child->name) ?></h1>
-    <p class="text-secondary mb-1"><?= esc($schedule['completed_count']) ?> daripada <?= esc($schedule['total_count']) ?> tugasan selesai</p>
-    <p class="fw-semibold text-primary mb-3">⭐ <?= esc($balance) ?> mata · 🔥 <?= esc($currentStreak) ?> hari berturut-turut</p>
-    <div class="progress rounded-pill" role="progressbar" aria-label="Kemajuan hari ini" aria-valuenow="<?= esc($schedule['completion_percentage']) ?>" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar" style="width: <?= esc($schedule['completion_percentage']) ?>%"><?= esc($schedule['completion_percentage']) ?>%</div>
+<header class="pt-2 mb-4 d-flex align-items-center gap-3">
+    <?= ui_avatar($profile['avatar'] ?? null) ?>
+    <div>
+        <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($family['name']) ?></p>
+        <h1 class="h2 fw-bold mb-1">Hai, <?= esc($child->name) ?></h1>
+        <p class="fw-semibold text-primary mb-1"><?= ui_icon('star') ?> <span data-balance><?= esc($balance) ?></span> mata</p>
+        <p class="small text-secondary mb-0" data-today-date><?= esc(ui_date($schedule['date'])) ?></p>
     </div>
 </header>
-
-<?php if ($schedule['routines'] === [] || $schedule['task_count'] === 0): ?>
-    <section class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-4 text-center">
-            <div class="display-5 mb-3" aria-hidden="true">☀️</div>
-            <h2 class="h4">Tiada tugasan hari ini</h2>
-            <p class="text-secondary mb-0">Nikmati hari anda!</p>
-        </div>
+<p class="small text-secondary mb-1">Tugasan dalam satu jam sebelum atau selepas jam peranti ini (telefon atau PC), berdasarkan masa mula. Tugasan tanpa masa sentiasa dipaparkan.</p>
+<p class="small text-secondary" data-filter-clock>Memuatkan waktu peranti…</p>
+<div data-task-notice role="status" aria-live="polite"></div>
+<div data-child-tasks data-csrf-name="<?= esc(csrf_token()) ?>" data-csrf-hash="<?= esc(csrf_hash()) ?>">
+    <section class="mb-4" aria-labelledby="pending-heading">
+        <h2 id="pending-heading" class="h4">Belum selesai</h2>
+        <p data-empty-pending class="text-secondary" hidden>Tiada tugasan dalam waktu ini.</p>
+        <div class="row g-3" data-pending></div>
     </section>
-<?php else: ?>
-    <div class="vstack gap-4">
+    <section class="mb-4" aria-labelledby="completed-heading">
+        <h2 id="completed-heading" class="h4">Sudah selesai</h2>
+        <p data-empty-completed class="text-secondary" hidden>Belum ada tugasan selesai dalam waktu ini.</p>
+        <div class="row g-3" data-completed></div>
+    </section>
+    <div data-task-source>
         <?php foreach ($schedule['routines'] as $routine): ?>
-            <?php if ($routine['tasks'] === []) { continue; } ?>
-            <section aria-labelledby="routine-<?= esc($routine['id']) ?>">
-                <div class="d-flex justify-content-between align-items-baseline mb-2 px-1">
-                    <h2 id="routine-<?= esc($routine['id']) ?>" class="h4 mb-0"><?= esc($routine['name']) ?></h2>
-                    <?php if ($routine['start_time']): ?><span class="small text-secondary"><?= esc(ui_time($routine['start_time'])) ?></span><?php endif ?>
-                </div>
-                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                    <div class="list-group list-group-flush">
-                        <?php foreach ($routine['tasks'] as $task): ?>
-                            <div class="list-group-item child-task-row <?= $task['is_completed'] ? 'task-completed' : '' ?> d-flex align-items-center gap-3 p-3">
-                                <form action="<?= route_to($task['is_completed'] ? 'child.tasks.undo' : 'child.tasks.complete', $task['id']) ?>" method="post" class="flex-shrink-0">
-                                    <?= csrf_field() ?>
-                                    <button type="submit" class="task-toggle <?= $task['is_completed'] ? 'is-complete' : '' ?>" aria-label="<?= $task['is_completed'] ? 'Batalkan penyelesaian ' : 'Tandakan selesai ' ?><?= esc($task['title']) ?>">
-                                        <?= $task['is_completed'] ? '✓' : '' ?>
-                                    </button>
-                                </form>
-                                <div class="flex-grow-1">
-                                    <div class="fw-semibold"><?= esc($task['title']) ?></div>
-                                    <div class="small text-secondary">
-                                        <?= esc(ui_task_time($task)) ?>
-                                        <?php if (! $task['is_required']): ?> · Pilihan<?php endif ?>
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge rounded-pill text-bg-warning">⭐ <?= esc($task['points']) ?></span>
-                                    <?php if ($task['is_completed']): ?><div class="small text-success mt-1">Selesai</div><?php endif ?>
-                                </div>
-                            </div>
-                        <?php endforeach ?>
-                    </div>
-                </div>
-            </section>
+            <?php foreach ($routine['tasks'] as $task): ?>
+                <article class="col-12 col-md-6" data-task data-time="<?= esc($task['task_time'] ?? '') ?>" data-completed="<?= $task['is_completed'] ? '1' : '0' ?>" data-id="<?= esc($task['id']) ?>">
+                    <div class="card border-0 shadow-sm h-100"><div class="card-body">
+                        <p class="small text-secondary mb-1"><?= esc($routine['name']) ?></p>
+                        <h3 class="h5" data-task-title><?= esc($task['title']) ?></h3>
+                        <p class="small text-secondary"><?= esc(ui_task_time($task)) ?></p>
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <span><?= ui_icon('star') ?> <?= esc($task['points']) ?> mata</span>
+                            <form method="post" action="<?= route_to($task['is_completed'] ? 'child.tasks.undo' : 'child.tasks.complete', $task['id']) ?>" data-task-form data-complete-url="<?= route_to('child.tasks.complete', $task['id']) ?>" data-undo-url="<?= route_to('child.tasks.undo', $task['id']) ?>">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-primary" data-task-button><?= $task['is_completed'] ? 'Batal selesai' : 'Sudah' ?></button>
+                            </form>
+                        </div>
+                    </div></div>
+                </article>
+            <?php endforeach ?>
         <?php endforeach ?>
     </div>
-<?php endif ?>
+</div>
+<noscript><p class="alert alert-warning">Aktifkan JavaScript untuk penapisan waktu telefon, pengesahan dan kemas kini segera.</p></noscript>
+<dialog id="task-confirm" aria-labelledby="confirm-title">
+    <h2 id="confirm-title" class="h4">Pasti ke sudah?</h2>
+    <p data-confirm-task></p>
+    <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-secondary" data-confirm-cancel>Belum lagi</button><button type="button" class="btn btn-primary" data-confirm-yes>Ya, sudah!</button></div>
+</dialog>
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script defer src="<?= ui_asset_url('assets/js/child-today.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -104,9 +104,7 @@ class RoutineTaskController extends BaseController
             throw PageNotFoundException::forPageNotFound();
         }
 
-        $message = $result['action'] === 'archived'
-            ? 'Tugasan telah dinyahaktifkan kerana mempunyai sejarah penyelesaian.'
-            : 'Tugasan telah dipadam.';
+        $message = 'Tugasan telah dinyahaktifkan. Anda boleh mengaktifkannya semula melalui Sunting.';
 
         return redirect()->to(route_to('parent.routines.edit', $result['routine_id']))->with('success', $message);
     }
@@ -120,11 +118,9 @@ class RoutineTaskController extends BaseController
             'assign_to' => 'permit_empty|in_list[current,all]',
             'duration_minutes' => 'permit_empty|integer|greater_than_equal_to[1]|less_than_equal_to[1440]',
             'schedule_type' => 'permit_empty|in_list[inherit,once,weekly,monthly,daily]',
-            'description' => 'permit_empty|max_length[5000]',
             'task_time' => 'permit_empty|regex_match[/^(?:[01]\\d|2[0-3]):[0-5]\\d$/]',
             'points' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[10000]',
             'is_required' => 'required|in_list[0,1]',
-            'sort_order' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[9999]',
             'is_active' => 'required|in_list[0,1]',
         ];
     }
@@ -133,11 +129,9 @@ class RoutineTaskController extends BaseController
     {
         $data = [
             'title' => $this->request->getPost('title'),
-            'description' => $this->request->getPost('description'),
             'task_time' => $this->request->getPost('task_time'),
             'points' => $this->request->getPost('points'),
             'is_required' => $this->request->getPost('is_required'),
-            'sort_order' => $this->request->getPost('sort_order'),
             'is_active' => $this->request->getPost('is_active'),
         ];
         foreach (['duration_minutes', 'schedule_type', 'start_date', 'repeat_days'] as $field) {

@@ -4,7 +4,7 @@
 <header class="pt-2 mb-4">
     <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($family['name']) ?></p>
     <h1 class="display-6 fw-bold mb-1">Kemajuan hari ini</h1>
-    <p class="text-secondary mb-0"><?= esc($child->name) ?> · <?= esc($progress['date']) ?></p>
+    <p class="text-secondary mb-0"><?= esc($child->name) ?> · <?= esc(ui_date($progress['date'])) ?></p>
 </header>
 
 <section class="card border-0 shadow-sm rounded-4 mb-3">
@@ -22,7 +22,7 @@
 <section class="card border-0 shadow-sm rounded-4 mb-3 bg-primary text-white">
     <div class="card-body p-4">
         <p class="mb-1 opacity-75">Baki mata</p>
-        <div class="d-flex justify-content-between align-items-end gap-3"><p class="display-5 fw-bold mb-0">⭐ <?= esc($balance) ?></p><p class="h4 mb-2">🔥 <?= esc($currentStreak) ?> hari berturut-turut</p></div>
+        <div class="d-flex justify-content-between align-items-end gap-3"><p class="display-5 fw-bold mb-0"><?= ui_icon('star') ?> <?= esc($balance) ?></p><p class="h4 mb-2"><?= ui_icon('fire') ?> <?= esc($currentStreak) ?> hari berturut-turut</p></div>
     </div>
 </section>
 
@@ -39,7 +39,7 @@
         <section class="card border-0 shadow-sm rounded-4 h-100">
             <div class="card-body p-4">
                 <p class="text-secondary mb-1">Mata tugasan hari ini</p>
-                <p class="h2 mb-1">⭐ <?= esc($progress['completed_snapshot_points']) ?></p>
+                <p class="h2 mb-1"><?= ui_icon('star') ?> <?= esc($progress['completed_snapshot_points']) ?></p>
                 <p class="small text-secondary mb-0">Baki di atas dikira terus daripada rekod transaksi.</p>
             </div>
         </section>
@@ -57,7 +57,7 @@
                     <div class="list-group-item d-flex justify-content-between align-items-start gap-3 p-3">
                         <div>
                             <div class="fw-semibold"><?= esc(ui_point_description($transaction)) ?></div>
-                            <div class="small text-secondary"><?= esc($transaction['transaction_date']) ?> · <?= esc(ui_label('transaction', $transaction['type'])) ?></div>
+                            <div class="small text-secondary"><?= esc(ui_date($transaction['transaction_date'])) ?> · <?= esc(ui_label('transaction', $transaction['type'])) ?></div>
                         </div>
                         <span class="fw-bold <?= (int) $transaction['points'] >= 0 ? 'text-success' : 'text-danger' ?>">
                             <?= (int) $transaction['points'] > 0 ? '+' : '' ?><?= esc($transaction['points']) ?>

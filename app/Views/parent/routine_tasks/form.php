@@ -18,10 +18,10 @@ $selectedMinute = (string) (old('task_minute') ?? ($savedTime === '' ? '00' : su
 <?php if (session('errors')): ?><div class="alert alert-danger" role="alert"><?php foreach (session('errors') as $error): ?><div><?= esc($error) ?></div><?php endforeach ?></div><?php endif ?>
 <form action="<?= esc($action) ?>" method="post" class="task-editor-card" data-task-form>
 <?= csrf_field() ?>
-<div class="task-name-row"><span class="task-clock" aria-hidden="true">◷</span><div class="flex-grow-1">
+<div class="task-name-row"><span class="task-clock" aria-hidden="true"><?= ui_icon('clock') ?></span><div class="flex-grow-1">
 <label for="title" class="form-label">Nama tugasan</label><input id="title" name="title" class="form-control" maxlength="160" required value="<?= esc($value('title')) ?>" placeholder="Contoh: Gosok gigi">
 </div></div>
-<details class="task-ideas"><summary>💡 Idea tugasan</summary><div class="task-chips mt-2">
+<details class="task-ideas"><summary><?= ui_icon('lightbulb') ?> Idea tugasan</summary><div class="task-chips mt-2">
 <?php foreach ([['Gosok gigi', 5, 5], ['Kemas katil', 5, 5], ['Baca buku', 15, 10], ['Siapkan kerja sekolah', 30, 20], ['Bantu ibu bapa', 15, 10]] as [$idea, $minutes, $stars]): ?>
 <button type="button" data-idea="<?= esc($idea) ?>" data-minutes="<?= $minutes ?>" data-stars="<?= $stars ?>"><?= esc($idea) ?></button>
 <?php endforeach ?></div></details>
@@ -40,14 +40,13 @@ $selectedMinute = (string) (old('task_minute') ?? ($savedTime === '' ? '00' : su
 <div data-weekly-section class="mt-3"><p class="mb-2">Hari ulangan mingguan</p><div class="task-chips task-frequency">
 <?php foreach ([1 => 'Isn', 'Sel', 'Rab', 'Kha', 'Jum', 'Sab', 'Ahd'] as $day => $label): ?><label><input type="checkbox" name="repeat_days[]" value="<?= $day ?>" <?= in_array((string) $day, array_map('strval', $days), true) ? 'checked' : '' ?>><span><?= $label ?></span></label><?php endforeach ?></div></div>
 <p class="small text-secondary mt-3">“Ikut rutin” menggunakan semua hari rutin tanpa perlu memilih hari sekali lagi. Pilihan lain hanya mengehadkan tugasan dalam hari rutin. Tarikh sekali mesti jatuh pada hari rutin. Bulanan: tarikh di luar hari rutin atau bulan tanpa tarikh berkenaan dilangkau, bukan dipindahkan.</p></fieldset>
-<fieldset class="task-section"><legend>Berapa bintang? ★</legend><label for="points" class="form-label">Mata ganjaran</label>
+<fieldset class="task-section"><legend>Berapa bintang? <?= ui_icon('star') ?></legend><label for="points" class="form-label">Mata ganjaran</label>
 <input id="points" name="points" type="number" min="0" max="10000" required class="form-control" value="<?= esc($value('points', 10)) ?>"><input type="range" min="0" max="10000" step="1" class="task-points-range" data-points-range aria-label="Laraskan mata ganjaran" value="<?= esc($value('points', 10)) ?>"><div class="task-chips task-adjust">
 <?php foreach ([-100, -10, -1, 1, 10, 100] as $amount): ?><button type="button" data-points-change="<?= $amount ?>" aria-label="<?= $amount < 0 ? 'Kurangkan' : 'Tambah' ?> <?= abs($amount) ?> mata"><?= $amount > 0 ? '+' : '' ?><?= $amount ?></button><?php endforeach ?></div></fieldset>
 <fieldset class="task-section"><legend>Untuk siapa?</legend><label for="assign_to" class="form-label">Pilih anak</label><select id="assign_to" name="assign_to" class="form-select"><option value="current"><?= esc($owner->name) ?></option>
 <?php if (! $task): ?><option value="all" <?= old('assign_to') === 'all' ? 'selected' : '' ?>>Semua anak aktif</option><?php endif ?></select>
 <p class="small text-secondary mt-2"><?= $task ? 'Suntingan hanya mengubah tugasan anak ini.' : 'Semua anak: salinan berasingan dalam rutin bernama sama. Rutin akan disalin jika belum ada. Markah dan suntingan setiap anak berasingan.' ?></p></fieldset>
-<details class="task-section"><summary>Tetapan tambahan</summary><label for="description" class="form-label mt-3">Penerangan</label><textarea id="description" name="description" class="form-control" rows="3" maxlength="5000"><?= esc($value('description')) ?></textarea>
-<label for="sort_order" class="form-label mt-3">Susunan</label><input id="sort_order" name="sort_order" type="number" min="0" max="9999" class="form-control" required value="<?= esc($value('sort_order', 0)) ?>">
+<details class="task-section"><summary>Tetapan tambahan</summary>
 <?php foreach (['is_required' => 'Tugasan wajib', 'is_active' => 'Tugasan aktif'] as $key => $label): ?><input type="hidden" name="<?= $key ?>" value="0"><div class="form-check form-switch mt-3"><input id="<?= $key ?>" name="<?= $key ?>" value="1" type="checkbox" class="form-check-input" <?= $value($key, 1) ? 'checked' : '' ?>><label for="<?= $key ?>" class="form-check-label"><?= $label ?></label></div><?php endforeach ?></details>
 <div class="task-save"><button type="submit" class="btn btn-primary w-100">Simpan tugasan</button></div>
 </form></div>

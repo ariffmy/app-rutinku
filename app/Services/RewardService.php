@@ -82,7 +82,7 @@ class RewardService
     {
         $reward = $this->getForParent($parentUserId, $rewardId);
         $model = $this->rewards ?? new RewardModel();
-        if (! $model->update($rewardId, $this->rewardPayload($data, (int) $reward['family_id']))) {
+        if (! $model->update($rewardId, $this->rewardPayload(array_replace($reward, $data), (int) $reward['family_id']))) {
             throw new InvalidArgumentException(implode(' ', $model->errors()));
         }
     }
@@ -313,6 +313,7 @@ class RewardService
         return [
             'family_id' => $familyId,
             'title' => trim((string) ($data['title'] ?? '')),
+            'category' => trim((string) ($data['category'] ?? 'Lain-lain')) ?: 'Lain-lain',
             'description' => $this->nullable($data['description'] ?? null),
             'points_required' => (int) ($data['points_required'] ?? 0),
             'image' => $this->nullable($data['image'] ?? null),

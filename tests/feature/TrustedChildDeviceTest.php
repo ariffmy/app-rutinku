@@ -216,6 +216,78 @@ final class TrustedChildDeviceTest extends CIUnitTestCase
         $this->assertSame(1, (new UserDeviceModel())->where('user_id', $childId)->where('is_trusted', true)->countAllResults());
     }
 
+    public function testInactiveDeviceCanBeDeletedButNotActiveDevice(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new ChildDeviceService();
+        $device = $service->provision($parentId, $childId);
+        try {
+            $service->deleteInactive($parentId, $childId, $device->deviceId);
+            $this->fail('Active device deletion must be rejected.');
+        } catch (\InvalidArgumentException) {
+            $this->assertNotNull((new UserDeviceModel())->find($device->deviceId));
+        }
+        $service->revoke($parentId, $childId, $device->deviceId);
+        $service->deleteInactive($parentId, $childId, $device->deviceId);
+        $this->assertNull((new UserDeviceModel())->find($device->deviceId));
+        $this->assertNotNull((new AuditLogModel())->where('action', 'device.deleted')->first());
+    }
+
+    public function testExpiredDeviceDeletionChecksOwnership(): void
+    {
+        [$parentId, $childId, $otherChildId] = $this->demoIds(true);
+        $service = new ChildDeviceService();
+        $device = $service->provision($parentId, $childId);
+        (new UserDeviceModel())->skipValidation(true)->update($device->deviceId, ['expires_at' => '2020-01-01 00:00:00']);
+        foreach ([[$this->createOutsideFamilyParent(), $childId], [$parentId, $otherChildId]] as [$actor, $target]) {
+            try {
+                $service->deleteInactive($actor, $target, $device->deviceId);
+                $this->fail('Unauthorized deletion must fail.');
+            } catch (AuthorizationException) {
+                $this->assertNotNull((new UserDeviceModel())->find($device->deviceId));
+            }
+        }
+        $service->deleteInactive($parentId, $childId, $device->deviceId);
+        $this->assertNull((new UserDeviceModel())->find($device->deviceId));
+    }
+
+    public function testInactiveDeviceDeleteFormAndEndpoint(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new ChildDeviceService();
+        $device = $service->provision($parentId, $childId);
+        $service->revoke($parentId, $childId, $device->deviceId);
+        $family = (new FamilyModel())->where('name', 'Demo Family')->first();
+        $security = service('security');
+        $session = ['user_id' => $parentId, 'user_role' => 'parent', 'family_id' => (int) $family['id'],
+            'auth_expires_at' => time() + 3600, $security->getTokenName() => $security->getHash()];
+        $page = $this->withSession($session)->get('/children/' . $childId . '/devices');
+        $page->assertOK();
+        $page->assertSee('Padam rekod peranti');
+        $page->assertDontSee('Batalkan Akses Peranti');
+        $this->withSession($session)->post('/children/' . $childId . '/devices/' . $device->deviceId . '/delete',
+            [$security->getTokenName() => $security->getHash()])->assertRedirectTo('/children/' . $childId . '/devices');
+        $this->assertNull((new UserDeviceModel())->find($device->deviceId));
+    }
+
+    public function testActivityHistoryIsFamilyScopedIncludesUndoAndIsLimited(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $outsideParent = $this->createOutsideFamilyParent();
+        $ledger = new \App\Models\PointTransactionModel();
+        for ($i = 0; $i < 25; ++$i) {
+            $ledger->insert(['child_user_id' => $childId, 'type' => $i === 24 ? 'reversal' : 'task',
+                'points' => $i === 24 ? -10 : 10, 'transaction_date' => '2026-09-04',
+                'description' => $i === 24 ? 'Batal: Tugasan selesai: Mandi' : 'Tugasan selesai: Mandi']);
+        }
+        $service = new \App\Services\ChildActivityService();
+        $activities = $service->recentForParent($parentId);
+        $this->assertCount(20, $activities);
+        $this->assertSame('Batal: Tugasan selesai: Mandi', $activities[0]['description']);
+        $this->assertSame('-10 mata', $activities[0]['detail']);
+        $this->assertSame([], $service->recentForParent($outsideParent));
+    }
+
     private function demoIds(bool $includeSecondChild = false): array
     {
         $users = new UserModel();

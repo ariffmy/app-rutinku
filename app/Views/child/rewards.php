@@ -4,19 +4,20 @@
 <header class="pt-2 mb-4">
     <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($catalogue['family']['name']) ?></p>
     <h1 class="display-6 fw-bold mb-1">Ganjaran</h1>
-    <p class="fw-semibold text-primary mb-0">⭐ <?= esc($catalogue['balance']) ?> mata tersedia</p>
+    <p class="fw-semibold text-primary mb-0"><?= ui_icon('star') ?> <?= esc($catalogue['balance']) ?> mata tersedia</p>
 </header>
 
 <?php if ($catalogue['rewards'] === []): ?>
-    <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 text-center"><div class="display-5 mb-2">🎁</div><h2 class="h4">Belum ada ganjaran</h2><p class="text-secondary mb-0">Ibu bapa akan menambah ganjaran di sini.</p></div></div>
+    <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 text-center"><div class="display-5 mb-2"><?= ui_icon('gift') ?></div><h2 class="h4">Belum ada ganjaran</h2><p class="text-secondary mb-0">Ibu bapa akan menambah ganjaran di sini.</p></div></div>
 <?php else: ?>
     <div class="row g-3">
         <?php foreach ($catalogue['rewards'] as $reward): ?>
             <div class="col-12 col-sm-6"><article class="card border-0 shadow-sm rounded-4 h-100"><div class="card-body p-4">
-                <div class="display-6 mb-2" aria-hidden="true">🎁</div>
+                <div class="display-6 mb-2" aria-hidden="true"><?= ui_icon('gift') ?></div>
                 <h2 class="h4"><?= esc($reward['title']) ?></h2>
-                <?php if ($reward['description']): ?><p class="text-secondary"><?= esc($reward['description']) ?></p><?php endif ?>
-                <p class="h5 text-primary">⭐ <?= esc($reward['points_required']) ?></p>
+                <p class="small text-secondary"><?= esc($reward['category'] ?? 'Lain-lain') ?></p>
+                <?php if ($url = ui_image_url($reward['image'] ?? null, true)): ?><img src="<?= esc($url) ?>" alt="<?= esc($reward['title']) ?>" class="reward-image" loading="lazy"><?php endif ?>
+                <p class="h5 text-primary"><?= ui_icon('star') ?> <?= esc($reward['points_required']) ?></p>
                 <?php if ($reward['has_pending_request']): ?>
                     <button class="btn btn-warning w-100" disabled>Menunggu Ibu bapa</button>
                 <?php elseif (! $reward['can_afford']): ?>

@@ -40,6 +40,21 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
         parent::tearDown();
     }
 
+    public function testDeactivationWithoutHistoryKeepsTaskVisibleAndCanBeReactivated(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $routineId = $service->create($parentId, $this->routineData($childId), [1, 2, 3, 4, 5, 6, 7]);
+        $taskId = $service->createTask($parentId, $routineId, $this->taskData('Kekalkan tugasan', 10));
+        $this->assertSame('archived', $service->deleteTask($parentId, $taskId)['action']);
+        $task = $service->getForParent($parentId, $routineId)['tasks'][0];
+        $this->assertSame($taskId, (int) $task['id']);
+        $this->assertSame(0, (int) $task['is_active']);
+        $this->assertSame(0, (new TodayTaskResolver())->resolve($childId, new DateTimeImmutable('now'))['task_count']);
+        $service->updateTask($parentId, $taskId, ['is_active' => 1]);
+        $this->assertSame(1, (new TodayTaskResolver())->resolve($childId, new DateTimeImmutable('now'))['task_count']);
+    }
+
     public function testParentCreatesRoutineWithUniqueWeeklyDaysAndTasks(): void
     {
         [$parentId, $childId] = $this->demoIds();
@@ -526,7 +541,7 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
     public function testParentCanSubmitAllChildrenTaskForm(): void
     {
         [$parentId, $childId] = $this->demoIds();
-        $source = (new RoutineService())->create($parentId, $this->routineData($childId), [1]);
+        $source = (new RoutineService())->create($parentId, $this->routineData($childId), [2, 4]);
         $response = $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $source), $this->taskData('Baca buku', 10) + ['assign_to' => 'all', 'schedule_type' => 'weekly', 'start_date' => '2026-09-03', 'repeat_days' => [2, 4], 'duration_minutes' => 15]);
         $response->assertRedirect();
         $this->assertSame(3, (new RoutineTaskModel())->countAllResults());
@@ -542,6 +557,29 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
 
         return $this->withSession($this->parentSession($parentId, (int) $family['id'], $token, $hash))
             ->post($path, [$token => $hash] + $payload);
+    }
+
+    public function testTasksAreOrderedByTimeIgnoringLegacySortWithUntimedLast(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $routineId = $service->create($parentId, $this->routineData($childId), [1]);
+        $late = $service->createTask($parentId, $routineId, array_replace($this->taskData('Petang', 5), ['task_time' => '18:00', 'sort_order' => 0]));
+        $untimed = $service->createTask($parentId, $routineId, array_replace($this->taskData('Tanpa masa', 5), ['task_time' => null, 'sort_order' => 0]));
+        $early = $service->createTask($parentId, $routineId, array_replace($this->taskData('Pagi', 5), ['task_time' => '08:00', 'sort_order' => 99]));
+        $this->assertSame([$early, $late, $untimed], array_map('intval', array_column($service->tasksForRoutine($routineId), 'id')));
+        $today = (new TodayTaskResolver())->resolve($childId, new DateTimeImmutable('2026-09-07 08:00:00+08:00'));
+        $this->assertSame([$early, $late, $untimed], array_map('intval', array_column($today['routines'][0]['tasks'], 'id')));
+    }
+
+    public function testFormsCanSaveWithoutRemovedFields(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $this->postRoutineAsParent($parentId, '/routines', ['child_user_id' => $childId, 'name' => 'Ringkas', 'days' => [1], 'is_active' => 1])->assertRedirect();
+        $routineId = (int) (new RoutineModel())->first()['id'];
+        $this->assertGreaterThan(0, $routineId);
+        $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $routineId), ['title' => 'Ringkas', 'points' => 5, 'is_required' => 1, 'is_active' => 1])->assertRedirect();
+        $this->assertSame(1, (new RoutineTaskModel())->countAllResults());
     }
 
     private function routineData(int $childId, string $name = 'Morning Routine', bool $active = true, int $sortOrder = 0): array

@@ -152,6 +152,36 @@ class ChildDeviceService
         return true;
     }
 
+    public function deleteInactive(int $parentUserId, int $childUserId, int $deviceId): void
+    {
+        $this->assertParentCanManageChild($parentUserId, $childUserId);
+        $devices = $this->devices ?? new UserDeviceModel();
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild($childUserId);
+            $device = $devices->find($deviceId);
+            if ($device === null || (int) $device['user_id'] !== $childUserId) {
+                throw new AuthorizationException('Peranti ini bukan milik anak ini.');
+            }
+            if ((bool) $device['is_trusted'] && $device['revoked_at'] === null
+                && strtotime((string) $device['expires_at']) > time()) {
+                throw new \InvalidArgumentException('Batalkan akses peranti aktif sebelum memadam rekodnya.');
+            }
+            if (! $devices->delete($deviceId)) {
+                throw new \RuntimeException('Rekod peranti tidak dapat dipadam.');
+            }
+            ($this->auditLogs ?? new AuditLogService())->record(
+                'device.deleted', $parentUserId, $childUserId, 'user_device', $deviceId,
+                'Ibu bapa memadam rekod peranti tidak aktif.',
+                ['device_name' => $device['device_name']], null,
+            );
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
     public function reset(int $parentUserId, int $childUserId): int
     {
         $this->assertParentCanManageChild($parentUserId, $childUserId);

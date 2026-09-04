@@ -14,6 +14,7 @@ class RewardModel extends Model
     protected $allowedFields = [
         'family_id',
         'title',
+        'category',
         'description',
         'points_required',
         'image',
@@ -22,6 +23,7 @@ class RewardModel extends Model
     protected $validationRules = [
         'family_id' => 'required|is_natural_no_zero',
         'title' => 'required|max_length[160]',
+        'category' => 'permit_empty|max_length[80]',
         'description' => 'permit_empty|max_length[5000]',
         'points_required' => 'required|is_natural_no_zero|less_than_equal_to[1000000]',
         'image' => 'permit_empty|max_length[255]',

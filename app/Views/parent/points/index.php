@@ -32,7 +32,7 @@
             <section class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
                     <p class="text-secondary mb-1">Baki semasa</p>
-                    <p class="display-5 fw-bold text-primary mb-0">⭐ <?= esc($account['balance']) ?></p>
+                    <p class="display-5 fw-bold text-primary mb-0"><?= ui_icon('star') ?> <?= esc($account['balance']) ?></p>
                 </div>
             </section>
 
@@ -68,7 +68,7 @@
                                 <tbody>
                                 <?php foreach ($account['history'] as $transaction): ?>
                                     <tr>
-                                        <td><?= esc($transaction['transaction_date']) ?></td>
+                                        <td><?= esc(ui_date($transaction['transaction_date'])) ?></td>
                                         <td><span class="badge text-bg-light border"><?= esc(ui_label('transaction', $transaction['type'])) ?></span></td>
                                         <td><?= esc(ui_point_description($transaction)) ?></td>
                                         <td class="text-end fw-semibold <?= (int) $transaction['points'] >= 0 ? 'text-success' : 'text-danger' ?>">

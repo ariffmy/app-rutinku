@@ -14,6 +14,8 @@ $routes->group('child', ['filter' => 'trusted-child-device'], static function (R
     $routes->get('today', 'Child\TodayController::index', ['as' => 'child.today']);
     $routes->get('progress', 'Child\ProgressController::index', ['as' => 'child.progress']);
     $routes->get('profile', 'Child\ProfileController::index', ['as' => 'child.profile']);
+    $routes->post('profile', 'Child\ProfileController::update', ['as' => 'child.profile.update']);
+    $routes->get('images/(:segment)', 'FamilyImageController::childImage/$1', ['as' => 'child.image']);
     $routes->get('rewards', 'Child\RewardController::index', ['as' => 'child.rewards']);
     $routes->post('rewards/(:num)/redeem', 'Child\RewardController::redeem/$1', ['as' => 'child.rewards.redeem']);
     $routes->post('tasks/(:num)/complete', 'Child\TaskController::complete/$1', ['as' => 'child.tasks.complete']);
@@ -22,6 +24,7 @@ $routes->group('child', ['filter' => 'trusted-child-device'], static function (R
 
 $routes->group('', ['filter' => 'parent-auth'], static function (RouteCollection $routes): void {
     $routes->get('dashboard', 'Parent\DashboardController::index', ['as' => 'parent.dashboard']);
+    $routes->get('family-images/(:segment)', 'FamilyImageController::parentImage/$1', ['as' => 'parent.image']);
     $routes->get('children', 'Parent\ChildController::index', ['as' => 'parent.children']);
     $routes->get('children/new', 'Parent\ChildController::new', ['as' => 'parent.children.new']);
     $routes->post('children', 'Parent\ChildController::create', ['as' => 'parent.children.create']);
@@ -54,5 +57,6 @@ $routes->group('', ['filter' => 'parent-auth'], static function (RouteCollection
     $routes->post('children/(:num)/devices/setup', 'Parent\DeviceController::setup/$1', ['as' => 'parent.child.devices.setup']);
     $routes->post('children/(:num)/devices/reset', 'Parent\DeviceController::reset/$1', ['as' => 'parent.child.devices.reset']);
     $routes->post('children/(:num)/devices/(:num)/revoke', 'Parent\DeviceController::revoke/$1/$2', ['as' => 'parent.child.devices.revoke']);
+    $routes->post('children/(:num)/devices/(:num)/delete', 'Parent\DeviceController::delete/$1/$2', ['as' => 'parent.child.devices.delete']);
     $routes->post('logout', 'Auth\LoginController::logout', ['as' => 'parent.logout']);
 });

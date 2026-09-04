@@ -52,7 +52,12 @@ final class ParentNavigationTest extends CIUnitTestCase
         $xpath = new DOMXPath($document);
         if ($path === '/dashboard') {
             $buttons = $xpath->query('//main//a[contains(concat(" ", normalize-space(@class), " "), " btn ")]');
-            $this->assertGreaterThanOrEqual(3, $buttons->length);
+            $this->assertGreaterThanOrEqual(1, $buttons->length);
+            $this->assertSame(0, $xpath->query('//section[@aria-labelledby="children-heading"]')->length);
+            $this->assertSame(1, $xpath->query('//section[@aria-labelledby="activity-heading"]')->length);
+            $this->assertStringNotContainsString('<th>Penyelesaian</th>', $html);
+            $this->assertStringNotContainsString('<th>Hari Berturut-turut</th>', $html);
+            $this->assertStringNotContainsString('Tugasan Hari Ini', $html);
             foreach ($buttons as $button) {
                 $this->assertStringContainsString(' btn-primary ', ' ' . $button->getAttribute('class') . ' ');
                 $this->assertStringNotContainsString('btn-outline', $button->getAttribute('class'));
@@ -103,7 +108,7 @@ final class ParentNavigationTest extends CIUnitTestCase
     public function testUpdatedNavigationAssetsUseNewPwaCacheVersion(): void
     {
         $worker = file_get_contents(ROOTPATH . 'public/service-worker.js');
-        $this->assertStringContainsString('rutinku-static-v10', $worker);
+        $this->assertStringContainsString('rutinku-static-v13', $worker);
         $this->assertStringContainsString('/assets/css/app.css', $worker);
         $this->assertStringContainsString('/assets/js/app.js', $worker);
     }
@@ -144,5 +149,22 @@ final class ParentNavigationTest extends CIUnitTestCase
         $this->assertStringNotContainsString('max-width:620px', $css);
         $this->assertStringContainsString("extend('layouts/parent')", file_get_contents(APPPATH . 'Views/parent/routine_tasks/form.php'));
         $this->assertStringContainsString("extend('layouts/parent')", file_get_contents(APPPATH . 'Views/parent/routines/form.php'));
+    }
+
+    public function testRemovedFieldsAndFontAwesomeAssets(): void
+    {
+        foreach (['parent/routines/form.php' => ['description', 'type', 'sort_order'], 'parent/routine_tasks/form.php' => ['description', 'sort_order']] as $file => $fields) {
+            $html = file_get_contents(APPPATH . 'Views/' . $file);
+            foreach ($fields as $field) {
+                $this->assertStringNotContainsString('name="' . $field . '"', $html);
+            }
+        }
+        foreach (['layouts/parent.php', 'layouts/child.php'] as $file) {
+            $this->assertStringContainsString('fontawesome/css/solid.min.css', file_get_contents(APPPATH . 'Views/' . $file));
+        }
+        $this->assertFileExists(ROOTPATH . 'public/assets/vendor/fontawesome/webfonts/fa-solid-900.woff2');
+        helper('ui');
+        $this->assertStringContainsString('fa-solid fa-star', ui_icon('star'));
+        $this->assertSame('', ui_icon('invalid'));
     }
 }

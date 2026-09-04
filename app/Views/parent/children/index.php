@@ -12,7 +12,7 @@
                 <div class="avatar-placeholder" aria-hidden="true"><?= esc(mb_strtoupper(mb_substr($child['name'], 0, 1))) ?></div>
                 <div><h2 class="h5 mb-1"><?= esc($child['name']) ?></h2><span class="badge <?= $child['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $child['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span></div>
             </div>
-            <dl class="row small mb-3"><dt class="col-6">Tarikh lahir</dt><dd class="col-6 text-end"><?= esc($child['date_of_birth'] ?: '—') ?></dd><dt class="col-6">Kedudukan</dt><dd class="col-6 text-end"><?= $child['is_ranking_eligible'] ? 'Layak' : 'Tidak layak' ?></dd></dl>
+            <dl class="row small mb-3"><dt class="col-6">Tarikh lahir</dt><dd class="col-6 text-end"><?= esc(ui_date($child['date_of_birth'] ?: null)) ?></dd><dt class="col-6">Kedudukan</dt><dd class="col-6 text-end"><?= $child['is_ranking_eligible'] ? 'Layak' : 'Tidak layak' ?></dd></dl>
             <div class="d-flex gap-2"><a class="btn btn-outline-primary btn-sm" href="<?= route_to('parent.children.edit', $child['id']) ?>">Sunting profil</a><a class="btn btn-outline-secondary btn-sm" href="<?= route_to('parent.child.devices', $child['id']) ?>">Peranti</a></div>
         </div></article></div>
     <?php endforeach ?>

@@ -35,7 +35,6 @@ class TodayTaskResolver
         $routines = ($this->routines ?? new RoutineModel())
             ->where('child_user_id', $childUserId)
             ->where('is_active', true)
-            ->orderBy('sort_order', 'ASC')
             ->orderBy('start_time', 'ASC')
             ->orderBy('id', 'ASC')
             ->findAll();
@@ -48,7 +47,7 @@ class TodayTaskResolver
             $tasks = ($this->routineTasks ?? new RoutineTaskModel())
                 ->where('routine_id', (int) $routine['id'])
                 ->where('is_active', true)
-                ->orderBy('sort_order', 'ASC')
+                ->orderBy('CASE WHEN task_time IS NULL THEN 1 ELSE 0 END', 'ASC', false)
                 ->orderBy('task_time', 'ASC')
                 ->orderBy('id', 'ASC')
                 ->findAll();

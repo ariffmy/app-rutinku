@@ -52,8 +52,9 @@
                             <h3 class="h5 mb-0"><?= esc($reward['title']) ?></h3>
                             <span class="badge <?= $reward['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $reward['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
                         </div>
-                        <?php if ($reward['description']): ?><p class="text-secondary"><?= esc($reward['description']) ?></p><?php endif ?>
-                        <p class="h5 text-primary">⭐ <?= esc($reward['points_required']) ?></p>
+                <p class="small text-secondary"><?= esc($reward['category'] ?? 'Lain-lain') ?></p>
+                <?php if ($url = ui_image_url($reward['image'] ?? null, false)): ?><img src="<?= esc($url) ?>" alt="<?= esc($reward['title']) ?>" class="reward-image" loading="lazy"><?php endif ?>
+                        <p class="h5 text-primary"><?= ui_icon('star') ?> <?= esc($reward['points_required']) ?></p>
                         <div class="d-flex gap-2">
                             <a href="<?= route_to('parent.rewards.edit', $reward['id']) ?>" class="btn btn-outline-primary">Sunting</a>
                             <?php if ($reward['is_active']): ?><form action="<?= route_to('parent.rewards.archive', $reward['id']) ?>" method="post"><?= csrf_field() ?><button class="btn btn-outline-danger" type="submit">Nyahaktif</button></form><?php endif ?>

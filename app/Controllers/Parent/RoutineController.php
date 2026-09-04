@@ -156,10 +156,7 @@ class RoutineController extends BaseController
                 ? 'required|in_list[all]'
                 : 'required|is_natural_no_zero',
             'name' => 'required|max_length[120]',
-            'description' => 'permit_empty|max_length[5000]',
-            'type' => 'permit_empty|max_length[50]',
             'start_time' => 'permit_empty|regex_match[/^(?:[01]\\d|2[0-3]):[0-5]\\d$/]',
-            'sort_order' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[9999]',
             'is_active' => 'required|in_list[0,1]',
             'days' => 'required',
         ];
@@ -170,9 +167,6 @@ class RoutineController extends BaseController
         $data = [
             'child_user_id' => $this->request->getPost('child_user_id'),
             'name' => $this->request->getPost('name'),
-            'description' => $this->request->getPost('description'),
-            'type' => $this->request->getPost('type'),
-            'sort_order' => $this->request->getPost('sort_order'),
             'is_active' => $this->request->getPost('is_active'),
         ];
         if ($this->request->getPost('start_time') !== null) {

@@ -4,7 +4,7 @@ namespace App\Controllers\Parent;
 
 use App\Controllers\BaseController;
 use App\Services\AuthService;
-use App\Services\FamilyService;
+use App\Services\ChildActivityService;
 use App\Services\RankingService;
 use App\Models\RewardRedemptionModel;
 use DateTimeImmutable;
@@ -30,7 +30,7 @@ class DashboardController extends BaseController
             'title' => 'Papan Pemuka',
             'currentUser' => $auth->currentUser(),
             'family' => $family,
-            'children' => (new FamilyService())->children((int) $family['id']),
+            'activities' => (new ChildActivityService())->recentForParent((int) $auth->currentUser()->id),
             'todayRanking' => $ranking,
             'pendingRewards' => $pendingRewards,
         ]);

@@ -49,7 +49,6 @@ class RoutineService
 
         $routines = $model
             ->orderBy('users.name', 'ASC')
-            ->orderBy('routines.sort_order', 'ASC')
             ->orderBy('routines.start_time', 'ASC')
             ->findAll();
 
@@ -125,7 +124,7 @@ class RoutineService
         }
 
         $days = $this->normalizeDays($days);
-        $payload = $this->routinePayload($data + ['start_time' => $routine['start_time']], $childUserId);
+        $payload = $this->routinePayload(array_replace($routine, $data), $childUserId);
         $routines = $this->routines ?? new RoutineModel();
 
         $this->db->transException(true)->transStart();
@@ -262,19 +261,11 @@ class RoutineService
     public function deleteTask(int $parentUserId, int $taskId): array
     {
         $task = $this->getTaskForParent($parentUserId, $taskId);
-        $hasHistory = ($this->taskCompletions ?? new TaskCompletionModel())
-            ->where('routine_task_id', $taskId)
-            ->countAllResults() > 0;
-
-        if ($hasHistory) {
-            ($this->routineTasks ?? new RoutineTaskModel())->update($taskId, ['is_active' => 0]);
-        } else {
-            ($this->routineTasks ?? new RoutineTaskModel())->delete($taskId);
-        }
+        ($this->routineTasks ?? new RoutineTaskModel())->skipValidation(true)->update($taskId, ['is_active' => 0]);
 
         return [
             'routine_id' => (int) $task['routine_id'],
-            'action' => $hasHistory ? 'archived' : 'deleted',
+            'action' => 'archived',
         ];
     }
 
@@ -282,7 +273,7 @@ class RoutineService
     {
         return ($this->routineTasks ?? new RoutineTaskModel())
             ->where('routine_id', $routineId)
-            ->orderBy('sort_order', 'ASC')
+            ->orderBy('CASE WHEN task_time IS NULL THEN 1 ELSE 0 END', 'ASC', false)
             ->orderBy('task_time', 'ASC')
             ->orderBy('id', 'ASC')
             ->findAll();
