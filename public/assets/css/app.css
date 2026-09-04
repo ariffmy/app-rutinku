@@ -18,6 +18,20 @@
 .task-row-actions > .btn { flex: 0 0 auto; }
 .task-row-actions form { margin: 0; }
 .profile-avatar { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.profile-photo-trigger { display: inline-flex; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.profile-photo-trigger:focus-visible { outline: 3px solid #a47700; outline-offset: 4px; }
+.profile-photo-dialog { width: min(92vw, 520px); max-height: 85dvh; overflow-y: auto; padding: 24px; border: 0; border-radius: 24px; color: #1f2937; box-shadow: 0 20px 60px #0003; }
+.profile-photo-dialog::backdrop { background: #17243d88; }
+.child-today-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.child-today-greeting { min-width: 0; overflow-wrap: anywhere; }
+.child-date-badge { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 12px; border: 1px solid #f5d47d; border-radius: 16px; background: #fff5d7; color: #775000; font-size: .75rem; white-space: nowrap; }
+.child-date-day { font-size: .875rem; font-weight: 800; }
+@media (max-width: 380px) {
+    .child-today-header { gap: 8px; }
+    .child-today-header .profile-avatar, .child-today-header .profile-avatar.avatar-placeholder { width: 56px; height: 56px; flex-basis: 56px; font-size: 1.8rem; }
+    .child-date-badge { padding: 8px; }
+    .child-today-greeting h1 { font-size: 1.2rem; }
+}
 .profile-avatar.avatar-placeholder { display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem; width: 88px; height: 88px; flex: 0 0 88px; border-radius: 50%; }
 .reward-image { width: 100%; height: 180px; object-fit: contain; border-radius: 16px; margin-bottom: 1rem; background: #f5f7fb; }
 #task-confirm { border: 0; border-radius: 24px; padding: 24px; width: min(92vw, 420px); box-shadow: 0 20px 60px #0003; }
@@ -26,6 +40,22 @@
 [data-task].task-completed { background: transparent; }
 [data-task].task-completed .card { background: #f0fdf4; }
 [data-task].task-completed h3 { text-decoration: line-through; }
+.child-task-card { --bs-card-border-radius: 14px; }
+.child-task-card > .card-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; }
+.child-task-details { min-width: 0; overflow-wrap: anywhere; }
+.child-task-card [data-task-form] { flex: 0 0 auto; margin: 0; }
+.task-stars { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border: 1px solid #f5d47d; border-radius: 999px; background: linear-gradient(135deg, #fff8df, #ffe9a8); color: #775000; font-size: .8rem; line-height: 1.25; box-shadow: inset 0 1px 0 #fff9; transition: transform .18s ease, box-shadow .18s ease; }
+.task-stars .ui-icon { color: #df9400; width: 1em; filter: drop-shadow(0 1px 0 #fff6); transition: transform .18s ease; }
+.task-stars-count { font-weight: 800; font-variant-numeric: tabular-nums; }
+.child-task-card:hover .task-stars, .child-task-card:focus-within .task-stars { transform: translateY(-1px); box-shadow: 0 2px 6px #d9950026; }
+.child-task-card:hover .task-stars .ui-icon, .child-task-card:focus-within .task-stars .ui-icon { transform: rotate(-10deg) scale(1.1); }
+[data-task].task-completed .task-stars { animation: task-stars-pop .32s ease-out; }
+@keyframes task-stars-pop { 50% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) {
+    .task-stars, .task-stars .ui-icon { transition: none; }
+    [data-task].task-completed .task-stars { animation: none; }
+    .child-task-card:hover .task-stars, .child-task-card:focus-within .task-stars, .child-task-card:hover .task-stars .ui-icon, .child-task-card:focus-within .task-stars .ui-icon { transform: none; }
+}
 
 body {
     background: var(--rutinku-bg);

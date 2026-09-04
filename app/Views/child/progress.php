@@ -1,11 +1,8 @@
 <?= $this->extend('layouts/child') ?>
 
 <?= $this->section('content') ?>
-<header class="pt-2 mb-4">
-    <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($family['name']) ?></p>
-    <h1 class="display-6 fw-bold mb-1">Kemajuan hari ini</h1>
-    <p class="text-secondary mb-0"><?= esc($child->name) ?> · <?= esc(ui_date($progress['date'])) ?></p>
-</header>
+<?= view('child/partials/header', ['child' => $child, 'family' => $family, 'profile' => $profile, 'balance' => $balance, 'headerDate' => $progress['date']]) ?>
+<h2 class="h4 mb-3">Kemajuan hari ini</h2>
 
 <section class="card border-0 shadow-sm rounded-4 mb-3">
     <div class="card-body p-4">

@@ -20,6 +20,7 @@ class ProgressController extends BaseController
         return view('child/progress', [
             'title' => 'Kemajuan',
             'child' => $context->child(),
+            'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),
             'family' => $context->family(),
             'progress' => (new TaskCompletionService())->getTodayProgress(
                 (int) $context->child()->id,

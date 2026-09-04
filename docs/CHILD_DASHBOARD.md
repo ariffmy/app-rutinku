@@ -1,6 +1,6 @@
 # Dashboard anak dan gambar ganjaran
 
-- Hari Ini menapis tugasan mengikut jam tempatan telefon, dari 60 minit sebelum hingga 60 minit selepas masa mula (termasuk kedua-dua sempadan). Tugasan tanpa masa sentiasa kelihatan. Penapis dikemas kini setiap 15 saat dan apabila aplikasi dibuka semula.
+- Hari Ini menapis tugasan mengikut jam peranti (telefon atau PC), dari masa mula sehingga sebelum masa tamat, menggunakan tempoh tugasan. Contoh: 17:00 selama 120 minit dipaparkan dari 17:00 sehingga sebelum 19:00, tanpa tambahan masa. Tugasan tanpa masa sentiasa kelihatan. Penapis dikemas kini setiap 15 saat dan apabila aplikasi dibuka semula.
 - Jadual hari dan pengesahan penyelesaian kekal di pelayan dalam Asia/Kuala_Lumpur; jam telefon tidak digunakan sebagai kuasa pemberian mata. Tetapkan tarikh, waktu dan zon waktu telefon secara automatik. Tugasan daripada hari lain tidak dibawa ke hari semasa.
 - Butang Sudah membuka dialog pengesahan. Selepas pelayan mengesahkan, AJAX mengemas kini mata dan memindahkan kad ke bahagian Sudah selesai di bawah. Kad menggunakan dua lajur pada skrin lebih besar dan satu pada telefon. Batal selesai memulangkan kad ke bahagian Belum selesai.
 - Permintaan bersiri, butang dilumpuhkan semasa menyimpan, dan token CSRF diganti selepas setiap respons. Kegagalan rangkaian tidak menandakan tugasan sebagai selesai secara andaian; muat semula untuk menyemak jika respons hilang.

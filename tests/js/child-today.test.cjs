@@ -1,22 +1,26 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { withinWindow, clockLabel } = require('../../public/assets/js/child-today.js');
-test('desktop clock uses the same window after the device hour changes', () => {
-  assert.equal(withinWindow('07:00', new Date(2026, 8, 4, 8, 0)), true);
-  assert.equal(withinWindow('07:00', new Date(2026, 8, 4, 8, 1)), false);
-  assert.equal(withinWindow('18:00', new Date(2026, 8, 4, 17, 0)), true);
-  assert.equal(clockLabel(17 * 60), '5 petang');
-  assert.equal(clockLabel(8 * 60 + 45), '8:45 pagi');
+const { withinWindow } = require('../../public/assets/js/child-today.js');
+const at = (h, m = 0, s = 0) => new Date(2026, 8, 4, h, m, s);
+test('two-hour task appears only from 5pm until before 7pm', () => {
+  assert.equal(withinWindow('17:00:00', at(16, 59, 59), 120), false);
+  assert.equal(withinWindow('17:00:00', at(17), 120), true);
+  assert.equal(withinWindow('17:00:00', at(18, 54), 120), true);
+  assert.equal(withinWindow('17:00:00', at(18, 59, 59), 120), true);
+  assert.equal(withinWindow('17:00:00', at(19), 120), false);
+  assert.equal(withinWindow('17:00:00', at(20), 120), false);
 });
-test('phone time window includes both boundaries, excludes outside and permits untimed', () => {
-  const now = new Date(2026, 8, 4, 17, 0);
-  assert.equal(withinWindow('18:00:00', now), true);
-  assert.equal(withinWindow('16:00:00', now), true);
-  assert.equal(withinWindow('18:01:00', now), false);
-  assert.equal(withinWindow('15:59:00', now), false);
-  assert.equal(withinWindow('', now), true);
+test('uses each duration including strings from HTML attributes', () => {
+  assert.equal(withinWindow('17:00', at(17, 14, 59), '15'), true);
+  assert.equal(withinWindow('17:00', at(17, 15), '15'), false);
+  assert.equal(withinWindow('17:00', at(18), '120'), true);
+  assert.equal(withinWindow('17:00', at(18), 'bad'), false);
+  assert.equal(withinWindow('17:00', at(17), 0), false);
 });
-test('daily tasks do not wrap to the wrong calendar day at midnight', () => {
-  assert.equal(withinWindow('23:30', new Date(2026, 8, 4, 0, 0)), false);
-  assert.equal(withinWindow('00:30', new Date(2026, 8, 4, 0, 0)), true);
+test('untimed tasks remain visible; future daily tasks do not wrap backwards', () => {
+  assert.equal(withinWindow('', at(12), 15), true);
+  assert.equal(withinWindow('23:30', at(0), 120), false);
+  assert.equal(withinWindow('23:30', at(23, 59), 120), true);
+  assert.equal(withinWindow('00:30', at(0), 15), false);
+  assert.equal(withinWindow('00:30', at(0, 30), 15), true);
 });

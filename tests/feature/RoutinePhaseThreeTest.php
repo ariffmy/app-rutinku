@@ -315,7 +315,80 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
         $this->assertArrayNotHasKey('ranking', $routes->getRoutes('POST'));
     }
 
-    public function testAllChildrenGetIndependentRoutinesWithTheSameFieldsAndDays(): void
+    public function testAllChildrenGroupEditsSyncWithoutTouchingOtherGroupsOrTasks(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $ids = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
+        $otherGroup = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
+        $individual = $service->create($parentId, $this->routineData($childId), [1]);
+        $source = (new RoutineModel())->find($ids[0]);
+        $task = $service->createTask($parentId, $ids[0], $this->taskData('Kekalkan tugasan', 4));
+        $inactiveChild = (new RoutineModel())->find($ids[1])['child_user_id'];
+        (new UserModel())->update($inactiveChild, ['is_active' => 0]);
+        $this->postRoutineAsParent($parentId, '/routines/' . $ids[0], [
+            'child_user_id' => $source['child_user_id'], 'name' => 'Nama bersama', 'is_active' => 0, 'days' => [2, 4],
+        ])->assertRedirectTo('/routines/' . $ids[0] . '/edit');
+        foreach ($ids as $id) {
+            $row = (new RoutineModel())->find($id);
+            $this->assertSame('Nama bersama', $row['name']);
+            $this->assertSame(0, (int) $row['is_active']);
+            $this->assertSame($source['group_token'], $row['group_token']);
+            $this->assertSame([2, 4], $service->daysForRoutine($id));
+        }
+        $this->assertSame('Morning Routine', (new RoutineModel())->find($individual)['name']);
+        $this->assertSame('Morning Routine', (new RoutineModel())->find($otherGroup[0])['name']);
+        $this->assertSame('Kekalkan tugasan', (new RoutineTaskModel())->find($task)['title']);
+        $this->assertCount(1, $service->tasksForRoutine($ids[0]));
+        $this->assertSame([], $service->tasksForRoutine($ids[1]));
+    }
+
+    public function testGroupRejectsReassignmentAndRollsBackAcrossFamilyBoundary(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $ids = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
+        $source = (new RoutineModel())->find($ids[0]);
+        $second = (new RoutineModel())->find($ids[1]);
+        try {
+            $service->update($parentId, $ids[0], ['child_user_id' => $second['child_user_id'], 'name' => 'Tidak'], [2]);
+            $this->fail('Group child reassignment must fail.');
+        } catch (InvalidArgumentException) {
+            $this->assertSame($source['child_user_id'], (new RoutineModel())->find($ids[0])['child_user_id']);
+        }
+        $outsideParent = $this->createOutsideFamilyParent();
+        $family = (new \App\Services\FamilyService())->currentFamilyForUser($outsideParent);
+        $this->db->table('family_users')->where('user_id', $second['child_user_id'])->update(['family_id' => $family['id']]);
+        try {
+            $service->update($parentId, $ids[0], ['child_user_id' => $source['child_user_id'], 'name' => 'Tidak separuh'], [2]);
+            $this->fail('Cross-family group must fail.');
+        } catch (AuthorizationException) {
+            $this->assertSame('Morning Routine', (new RoutineModel())->find($ids[0])['name']);
+            $this->assertSame([1], $service->daysForRoutine($ids[0]));
+        }
+    }
+
+    public function testRoutineListAndEditorExplainGroupScope(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $ids = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
+        $service->create($parentId, $this->routineData($childId, 'Individu saya'), [1]);
+        $family = (new FamilyModel())->where('name', 'Demo Family')->first();
+        $session = $this->parentSession($parentId, (int) $family['id'], 'unused', 'unused');
+        $list = $this->withSession($session)->get('/routines');
+        $list->assertOK();
+        $list->assertSee('Semua anak · sunting bersama');
+        $list->assertSee('Individu');
+        $edit = $this->withSession($session)->get('/routines/' . $ids[0] . '/edit');
+        $edit->assertOK();
+        $edit->assertSee('Simpan untuk semua anak');
+        $edit->assertSee('Child One');
+        $edit->assertSee('Child Two');
+        $this->assertStringNotContainsString('<select id="child_user_id"', $edit->response()->getBody());
+    }
+
+    public function testAllChildrenGetLinkedRoutinesWithIndependentTasks(): void
     {
         [$parentId, $childId] = $this->demoIds();
         $service = new RoutineService();

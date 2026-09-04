@@ -1,9 +1,13 @@
 (() => {
   'use strict';
-  const withinWindow = (time, now) => {
+  const withinWindow = (time, now, duration = 15) => {
     if (!time) return true;
     const [hours, minutes] = time.split(':').map(Number);
-    return Math.abs(hours * 60 + minutes - (now.getHours() * 60 + now.getMinutes())) <= 60;
+    const start = hours * 60 + minutes;
+    const length = Number(duration);
+    const current = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+    if (!Number.isFinite(start) || !Number.isFinite(length) || length < 1 || length > 1440) return false;
+    return current >= start && current < start + length;
   };
   const clockLabel = (minutes) => {
     const total = (minutes + 1440) % 1440;
@@ -27,13 +31,12 @@
   const pageDay = new Date().toDateString();
   const arrange = () => {
     const now = new Date();
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    document.querySelector('[data-filter-clock]').textContent = `Waktu peranti: ${clockLabel(minutes)} · Julat masa mula hari ini: ${clockLabel(Math.max(0, minutes - 60))} hingga ${clockLabel(Math.min(1439, minutes + 60))}`;
     if (now.toDateString() !== pageDay) { location.reload(); return; }
     document.querySelector('[data-today-date]').textContent = new Intl.DateTimeFormat('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'}).format(now);
+    document.querySelector('[data-today-day]').textContent = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'][now.getDay()];
     for (const task of tasks) {
       const done = task.dataset.completed === '1';
-      task.hidden = !withinWindow(task.dataset.time, now);
+      task.hidden = !withinWindow(task.dataset.time, now, task.dataset.duration);
       task.classList.toggle('task-completed', done);
       const target = done ? completed : pending;
       target.append(task);
@@ -41,8 +44,10 @@
       form.action = done ? form.dataset.undoUrl : form.dataset.completeUrl;
       form.querySelector('button').textContent = done ? 'Batal selesai' : 'Sudah';
     }
-    root.querySelector('[data-empty-pending]').hidden = [...pending.children].some(task => !task.hidden);
-    root.querySelector('[data-empty-completed]').hidden = [...completed.children].some(task => !task.hidden);
+    const hasPendingTasks = [...pending.children].some(task => !task.hidden);
+    root.querySelector('[data-empty-pending]').hidden = hasPendingTasks;
+    root.querySelector('#pending-heading').hidden = !hasPendingTasks;
+    root.querySelector('[data-completed-section]').hidden = ![...completed.children].some(task => !task.hidden);
   };
   const send = async (form) => {
     if (busy) return;
@@ -77,8 +82,11 @@
     if (!form) return;
     event.preventDefault();
     if (busy) return;
-    if (form.closest('[data-task]').dataset.completed === '1') { send(form); return; }
+    const undo = form.closest('[data-task]').dataset.completed === '1';
     selected = form;
+    modal.querySelector('#confirm-title').textContent = undo ? 'Pasti mahu batalkan selesai?' : 'Pasti ke sudah?';
+    modal.querySelector('[data-confirm-cancel]').textContent = undo ? 'Tidak, kekalkan' : 'Belum lagi';
+    modal.querySelector('[data-confirm-yes]').textContent = undo ? 'Ya, batalkan' : 'Ya, sudah!';
     modal.querySelector('[data-confirm-task]').textContent = form.closest('[data-task]').querySelector('[data-task-title]').textContent;
     modal.showModal();
     modal.querySelector('[data-confirm-cancel]').focus();

@@ -46,6 +46,16 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
         $routines = new RoutineService();
         $routine = $routines->create($parent, ['child_user_id' => $child, 'name' => 'Pagi', 'is_active' => 1], [1,2,3,4,5,6,7]);
         $task = $routines->createTask($parent, $routine, ['title' => 'Mandi', 'points' => 10, 'is_required' => 1, 'is_active' => 1]);
+        $page = $this->get('/child/today');
+        $page->assertOK();
+        $page->assertSee('Mandi');
+        $this->assertStringContainsString('child-task-card', $page->response()->getBody());
+        $this->assertStringContainsString('class="task-stars" role="img" aria-label="10 bintang"', $page->response()->getBody());
+        $this->assertStringContainsString('class="task-stars-count" aria-hidden="true">10</span>', $page->response()->getBody());
+        $this->assertStringNotContainsString('Bila-bila masa', $page->response()->getBody());
+        $this->assertStringNotContainsString('Bila-bila masa · 15 minit', $page->response()->getBody());
+        $this->assertStringContainsString('data-duration="15"', $page->response()->getBody());
+        $this->assertStringNotContainsString('>Pagi</p>', $page->response()->getBody());
         $response = $this->postChild('/child/tasks/' . $task . '/complete', [], true);
         $response->assertOK();
         $data = json_decode($response->response()->getBody(), true);
@@ -67,6 +77,9 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
         $this->assertSame('robot', (new ChildProfileModel())->where('user_id', $child)->first()['avatar']);
         $profile = $this->get('/child/profile');
         $profile->assertOK();
+        $this->assertStringContainsString('data-open-photo', $profile->response()->getBody());
+        $this->assertStringContainsString('<dialog id="profile-photo-dialog"', $profile->response()->getBody());
+        $this->assertStringNotContainsString('<dialog open', $profile->response()->getBody());
         $profile->assertSee('Umur');
         $profile->assertSee('Ibu bapa');
         $profile->assertDontSee('Hari Berturut-turut');
@@ -77,8 +90,19 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
         $today->assertOK();
         $today->assertSee('Pasti ke sudah?');
         $today->assertSee('Sudah selesai');
+        $this->assertStringContainsString('data-completed-section hidden', $today->response()->getBody());
+        $this->assertStringContainsString('data-empty-pending class="card border-0 shadow-sm"', $today->response()->getBody());
+        $this->assertStringNotContainsString('Belum ada tugasan selesai dalam waktu ini.', $today->response()->getBody());
         $today->assertDontSee('0 daripada 0');
         $today->assertDontSee('hari berturut-turut');
+        foreach (['/child/rewards', '/child/progress'] as $path) {
+            $page = $this->get($path);
+            $page->assertOK();
+            $page->assertSee('Hai, Child One');
+            $this->assertStringContainsString('child-today-header', $page->response()->getBody());
+            $this->assertStringContainsString('child-date-badge', $page->response()->getBody());
+            $this->assertStringContainsString('fa-robot', $page->response()->getBody());
+        }
     }
     public function testFamilyImageIsPrivateAndRequiresTrustedDevice(): void
     {

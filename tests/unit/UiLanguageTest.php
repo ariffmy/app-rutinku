@@ -12,7 +12,8 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringEndsWith('?v=' . substr(hash_file('sha256', FCPATH . $path), 0, 12), ui_asset_url($path));
         $view = file_get_contents(APPPATH . 'Views/child/today.php');
         $this->assertStringContainsString("ui_asset_url('assets/js/child-today.js')", $view);
-        $this->assertStringContainsString('data-filter-clock', $view);
+        $this->assertStringNotContainsString('data-filter-clock', $view);
+        $this->assertStringNotContainsString('Tugasan dalam satu jam', $view);
     }
 
     public function testMalaysianDatesAndTimes(): void

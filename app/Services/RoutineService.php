@@ -68,6 +68,17 @@ class RoutineService
         $routine = ($this->routines ?? new RoutineModel())->find($routineId);
         $routine['days'] = $this->daysForRoutine($routineId);
         $routine['tasks'] = $this->tasksForRoutine($routineId);
+        $routine['group_children'] = [];
+        if (! empty($routine['group_token'])) {
+            $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
+            if ($family === null) {
+                throw new AuthorizationException('Ibu bapa mesti menjadi ahli satu keluarga.');
+            }
+            $routine['group_children'] = $this->db->table('routines r')->select('u.name')
+                ->join('users u', 'u.id = r.child_user_id')->join('family_users f', 'f.user_id = u.id')
+                ->where('f.family_id', (int) $family['id'])->where('r.group_token', $routine['group_token'])
+                ->orderBy('u.name', 'ASC')->get()->getResultArray();
+        }
 
         return $routine;
     }
@@ -81,11 +92,12 @@ class RoutineService
 
         $days = $this->normalizeDays($days);
         $payload = $this->routinePayload($data, $childUserId);
+        $payload['assignment_scope'] = 'individual';
 
         return $this->insertRoutines([$payload], $days)[0];
     }
 
-    /** @return list<int> IDs of independent routines for the family's currently active children. */
+    /** @return list<int> Linked routines with independent tasks and completion history. */
     public function createForAllChildren(int $parentUserId, array $data, array $days): array
     {
         $families = $this->families ?? new FamilyService();
@@ -96,6 +108,7 @@ class RoutineService
 
         $authorization = $this->authorization ?? new FamilyAuthorizationService();
         $payloads = [];
+        $groupToken = bin2hex(random_bytes(16));
         foreach ($families->children((int) $family['id']) as $child) {
             if (! $child['is_active']) {
                 continue;
@@ -105,7 +118,7 @@ class RoutineService
             if (! $authorization->parentCanManageChild($parentUserId, $childUserId)) {
                 throw new AuthorizationException('Ibu bapa tidak boleh mencipta rutin untuk anak ini.');
             }
-            $payloads[] = $this->routinePayload($data, $childUserId);
+            $payloads[] = $this->routinePayload($data, $childUserId) + ['group_token' => $groupToken, 'assignment_scope' => 'all'];
         }
 
         if ($payloads === []) {
@@ -118,6 +131,10 @@ class RoutineService
     public function update(int $parentUserId, int $routineId, array $data, array $days): void
     {
         $routine = $this->getForParent($parentUserId, $routineId);
+        if (! empty($routine['group_token'])) {
+            $this->updateGroup($parentUserId, $routine, $data, $days);
+            return;
+        }
         $childUserId = (int) ($data['child_user_id'] ?? 0);
         if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childUserId)) {
             throw new AuthorizationException('Ibu bapa tidak boleh memindahkan rutin kepada anak tersebut.');
@@ -133,6 +150,40 @@ class RoutineService
                 throw new InvalidArgumentException(implode(' ', $routines->errors()));
             }
             $this->replaceDays($routineId, $days);
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
+    private function updateGroup(int $parentUserId, array $source, array $data, array $days): void
+    {
+        if ((int) ($data['child_user_id'] ?? $source['child_user_id']) !== (int) $source['child_user_id']) {
+            throw new InvalidArgumentException('Anak bagi rutin kumpulan tidak boleh ditukar secara individu.');
+        }
+        $days = $this->normalizeDays($days);
+        $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
+                $this->db->query('SELECT id FROM routines WHERE group_token = ? ORDER BY id FOR UPDATE', [$source['group_token']]);
+            }
+            $members = ($this->routines ?? new RoutineModel())->where('group_token', $source['group_token'])->orderBy('id')->findAll();
+            foreach ($members as $member) {
+                // Include inactive children in the original group, but never another family.
+                $child = (new \App\Models\UserModel())->find((int) $member['child_user_id']);
+                if ($family === null || $child === null || $child->roleEnum() !== \App\Enums\UserRole::CHILD
+                    || ! ($this->authorization ?? new FamilyAuthorizationService())->userBelongsToFamily((int) $child->id, (int) $family['id'])) {
+                    throw new AuthorizationException('Kumpulan rutin mengandungi anak di luar keluarga ini.');
+                }
+                $payload = $this->routinePayload(array_replace($member, array_intersect_key($data, array_flip(['name', 'is_active']))), (int) $member['child_user_id']);
+                $model = $this->routines ?? new RoutineModel();
+                if (! $model->update((int) $member['id'], $payload)) {
+                    throw new InvalidArgumentException(implode(' ', $model->errors()));
+                }
+                $this->replaceDays((int) $member['id'], $days);
+            }
             $this->db->transComplete();
         } catch (\Throwable $exception) {
             $this->db->transRollback();
@@ -222,7 +273,7 @@ class RoutineService
                     throw new InvalidArgumentException('Pastikan setiap anak mempunyai hanya satu rutin aktif bernama ' . $source['name'] . '.');
                 }
                 if ($matches === []) {
-                    $targetId = $routines->insert($this->routinePayload($source, $childId), true);
+                    $targetId = $routines->insert($this->routinePayload($source, $childId) + ['assignment_scope' => 'individual'], true);
                     if ($targetId === false) {
                         throw new InvalidArgumentException(implode(' ', $routines->errors()));
                     }

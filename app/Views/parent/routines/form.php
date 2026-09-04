@@ -7,13 +7,14 @@ $selectedDays = (array) (old('days') ?? ($routine['days'] ?? []));
 $selectedChild = old('child_user_id') ?? ($routine['child_user_id'] ?? '');
 $selectedChild = is_scalar($selectedChild) ? (string) $selectedChild : '';
 $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine['is_active'] ?? true);
+$isGroup = ! empty($routine['group_token']);
 ?>
 <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
     <div>
         <a href="<?= route_to('parent.routines') ?>" class="small text-decoration-none">← Rutin</a>
         <h1 class="h2 mb-1"><?= $routine ? 'Sunting rutin' : 'Rutin baharu' ?></h1>
     </div>
-    <?php if ($routine): ?>
+    <?php if ($routine && ! $isGroup): ?>
         <form action="<?= route_to('parent.routines.delete', $routine['id']) ?>" method="post">
             <?= csrf_field() ?>
             <button type="submit" class="btn btn-outline-danger">Padam / nyahaktif</button>
@@ -28,9 +29,16 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
 <form action="<?= esc($action) ?>" method="post" class="card border-0 shadow-sm mb-4">
     <?= csrf_field() ?>
     <div class="card-body p-4">
+        <?php if ($isGroup): ?>
+            <div class="alert alert-info">Rutin Semua anak: perubahan nama, hari dan status aktif akan digunakan kepada semua anak dalam kumpulan ini: <?= esc(implode(', ', array_column($routine['group_children'], 'name'))) ?>. Tugasan dan mata kekal berasingan.</div>
+        <?php endif ?>
         <div class="row g-3">
             <div class="col-12 col-md-6">
                 <label for="child_user_id" class="form-label">Anak</label>
+                <?php if ($isGroup): ?>
+                    <input type="hidden" name="child_user_id" value="<?= esc($routine['child_user_id']) ?>">
+                    <input id="child_user_id" class="form-control" value="Semua anak (kumpulan asal)" readonly>
+                <?php else: ?>
                 <select id="child_user_id" name="child_user_id" class="form-select" required<?= ! $routine ? ' aria-describedby="child-selection-help"' : '' ?>>
                     <option value="">Pilih Anak</option>
                     <?php if (! $routine && $children !== []): ?>
@@ -40,10 +48,11 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
                         <option value="<?= esc($child['id']) ?>" <?= $selectedChild === (string) $child['id'] ? 'selected' : '' ?>><?= esc($child['name']) ?></option>
                     <?php endforeach ?>
                 </select>
+                <?php endif ?>
                 <?php if (! $routine): ?>
                     <div id="child-selection-help" class="form-text"><?= $children === []
                         ? 'Tiada anak aktif. Tambah atau aktifkan anak dahulu.'
-                        : 'Semua anak: cipta salinan rutin untuk setiap anak aktif dalam keluarga. Tugasan dan perubahan selepas ini diurus berasingan bagi setiap anak.' ?></div>
+                        : 'Semua anak: cipta rutin berpaut untuk semua anak aktif sekarang. Suntingan nama, hari dan status rutin akan dikemas kini bersama. Tugasan dan mata kekal berasingan.' ?></div>
                 <?php endif ?>
             </div>
             <div class="col-12 col-md-6">
@@ -72,7 +81,7 @@ $active = old('is_active') !== null ? (bool) old('is_active') : (bool) ($routine
         </div>
     </div>
     <div class="card-footer bg-white border-0 px-4 pb-4">
-        <button type="submit" class="btn btn-primary">Simpan rutin</button>
+        <button type="submit" class="btn btn-primary"><?= $isGroup ? 'Simpan untuk semua anak' : 'Simpan rutin' ?></button>
     </div>
 </form>
 

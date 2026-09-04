@@ -12,6 +12,8 @@ class RoutineModel extends Model
     protected $useTimestamps = true;
     protected $allowedFields = [
         'child_user_id',
+        'group_token',
+        'assignment_scope',
         'name',
         'description',
         'type',

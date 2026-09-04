@@ -62,7 +62,7 @@ class RoutineController extends BaseController
                 );
 
                 return redirect()->to(route_to('parent.routines'))->with('success',
-                    'Rutin telah dicipta untuk ' . count($routineIds) . ' anak aktif. Buka setiap rutin untuk tambah tugasan; setiap salinan diurus berasingan.');
+                    'Rutin telah dicipta untuk ' . count($routineIds) . ' anak aktif. Suntingan nama, hari dan status rutin akan dikemas kini bersama.');
             }
 
             $routineId = $service->create(

@@ -17,6 +17,7 @@ class RewardController extends BaseController
         return view('child/rewards', [
             'title' => 'Ganjaran',
             'child' => $context->child(),
+            'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),
             'catalogue' => (new RewardService())->childCatalogue((int) $context->child()->id),
             'activeNav' => 'rewards',
         ]);

@@ -7,7 +7,7 @@ $today = new \DateTimeImmutable('today', new \DateTimeZone(app_timezone()));
 $age = $birth && $birth <= $today ? $birth->diff($today)->y . ' tahun' : '—';
 ?>
 <header class="text-center mb-4">
-    <div class="d-flex justify-content-center mb-3"><?= ui_avatar($profile['avatar'] ?? null) ?></div>
+    <div class="d-flex justify-content-center mb-3"><button type="button" class="profile-photo-trigger" aria-label="Tukar gambar profil" aria-haspopup="dialog" aria-controls="profile-photo-dialog" data-open-photo><?= ui_avatar($profile['avatar'] ?? null) ?></button></div>
     <h1 class="h2 mb-1"><?= esc($child->name) ?></h1>
     <p class="text-secondary"><?= esc($family['name']) ?></p>
     <p class="h4"><?= ui_icon('star') ?> <?= esc($balance) ?> mata</p>
@@ -20,8 +20,8 @@ $age = $birth && $birth <= $today ? $birth->diff($today)->y . ' tahun' : '—';
         <dt class="col-5">Ibu bapa</dt><dd class="col-7 text-end"><?= esc(implode(', ', array_column($parents, 'name')) ?: '—') ?></dd>
     </dl>
 </div></section>
-<section class="card border-0 shadow-sm"><div class="card-body">
-    <h2 class="h5">Gambar saya</h2>
+<dialog id="profile-photo-dialog" class="profile-photo-dialog" aria-labelledby="photo-dialog-title">
+    <h2 id="photo-dialog-title" class="h5">Gambar saya</h2>
     <form action="<?= route_to('child.profile.update') ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
         <fieldset class="mb-3"><legend class="fs-6">Pilih avatar</legend><div class="d-flex flex-wrap gap-3">
@@ -34,6 +34,10 @@ $age = $birth && $birth <= $today ? $birth->diff($today)->y . ' tahun' : '—';
         <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="form-control" aria-describedby="photo-help">
         <p id="photo-help" class="form-text">JPG, PNG atau WebP, maksimum 4 MB / 12 megapiksel. Gambar dimuat naik menggantikan pilihan avatar.</p>
         <button class="btn btn-primary" type="submit">Simpan gambar</button>
+        <button class="btn btn-secondary" type="button" data-close-photo>Tutup</button>
     </form>
-</div></section>
+</dialog>
+<?= $this->endSection() ?>
+<?= $this->section('scripts') ?>
+<script defer src="<?= ui_asset_url('assets/js/child-profile.js') ?>"></script>
 <?= $this->endSection() ?>

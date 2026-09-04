@@ -1,11 +1,8 @@
 <?= $this->extend('layouts/child') ?>
 
 <?= $this->section('content') ?>
-<header class="pt-2 mb-4">
-    <p class="text-uppercase small text-secondary fw-semibold mb-1"><?= esc($catalogue['family']['name']) ?></p>
-    <h1 class="display-6 fw-bold mb-1">Ganjaran</h1>
-    <p class="fw-semibold text-primary mb-0"><?= ui_icon('star') ?> <?= esc($catalogue['balance']) ?> mata tersedia</p>
-</header>
+<?= view('child/partials/header', ['child' => $child, 'family' => $catalogue['family'], 'profile' => $profile, 'balance' => $catalogue['balance'], 'headerDate' => date('Y-m-d')]) ?>
+<h2 class="h4 mb-3">Ganjaran</h2>
 
 <?php if ($catalogue['rewards'] === []): ?>
     <div class="card border-0 shadow-sm rounded-4"><div class="card-body p-4 text-center"><div class="display-5 mb-2"><?= ui_icon('gift') ?></div><h2 class="h4">Belum ada ganjaran</h2><p class="text-secondary mb-0">Ibu bapa akan menambah ganjaran di sini.</p></div></div>
