@@ -303,6 +303,31 @@ final class PhaseNineToElevenTest extends CIUnitTestCase
         return new DateTimeImmutable('now', new DateTimeZone(app_timezone()));
     }
 
+    public function testParentAvatarUpdatesSharedProfileAndBlankSelectionPreservesIt(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $security = service('security');
+        $session = $this->parentSession($parentId) + [$security->getTokenName() => $security->getHash()];
+        $payload = ['name' => 'Child One', 'date_of_birth' => '2017-05-04', 'is_ranking_eligible' => 1, 'is_active' => 1, 'avatar' => 'cat'];
+        $this->withSession($session)->post('/children/' . $childId, $payload + [$security->getTokenName() => $security->getHash()])->assertRedirectTo('/children');
+        $service = new ChildManagementService();
+        $this->assertSame('cat', $service->getForParent($parentId, $childId)['profile']['avatar']);
+        $service->update($parentId, $childId, array_diff_key($payload, ['avatar' => true]));
+        $this->assertSame('cat', $service->getForParent($parentId, $childId)['profile']['avatar']);
+        $list = $this->withSession($this->parentSession($parentId))->get('/children');
+        $list->assertOK();
+        $this->assertStringContainsString('fa-cat', $list->response()->getBody());
+        $form = $this->withSession($this->parentSession($parentId))->get('/children/' . $childId . '/edit');
+        $form->assertOK();
+        $this->assertStringContainsString('enctype="multipart/form-data"', $form->response()->getBody());
+        $this->assertStringContainsString('name="photo"', $form->response()->getBody());
+        $device = (new ChildDeviceService())->provision($parentId, $childId);
+        service('superglobals')->setCookie(ChildDeviceService::requestCookieName(), $device->rawToken);
+        $page = $this->get('/child/profile');
+        $page->assertOK();
+        $this->assertStringContainsString('fa-cat', $page->response()->getBody());
+    }
+
     private function demoIds(): array
     {
         $users = new UserModel();

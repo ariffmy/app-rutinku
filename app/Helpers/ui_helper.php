@@ -7,6 +7,18 @@ function ui_asset_url(string $path): string
     return base_url($path) . (is_file($file) ? '?v=' . substr(hash_file('sha256', $file), 0, 12) : '');
 }
 
+function ui_transaction_badge(array $transaction): string
+{
+    return match ($transaction['type'] ?? '') {
+        'task' => 'text-bg-success',
+        'reversal' => 'text-bg-danger',
+        'bonus' => 'text-bg-warning',
+        'reward' => 'text-bg-info',
+        'adjustment' => (int) ($transaction['points'] ?? 0) < 0 ? 'text-bg-danger' : 'text-bg-secondary',
+        default => 'text-bg-secondary',
+    };
+}
+
 function ui_icon(string $name, string $label = ''): string
 {
     $icons = ['star', 'fire', 'gift', 'lightbulb', 'clock', 'check', 'arrow-left', 'bars', 'lock', 'user', 'cat', 'robot', 'rocket', 'sun'];

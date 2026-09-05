@@ -1,22 +1,5 @@
 (() => {
   'use strict';
-  const withinWindow = (time, now, duration = 15) => {
-    if (!time) return true;
-    const [hours, minutes] = time.split(':').map(Number);
-    const start = hours * 60 + minutes;
-    const length = Number(duration);
-    const current = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-    if (!Number.isFinite(start) || !Number.isFinite(length) || length < 1 || length > 1440) return false;
-    return current >= start && current < start + length;
-  };
-  const clockLabel = (minutes) => {
-    const total = (minutes + 1440) % 1440;
-    const hour = Math.floor(total / 60);
-    const minute = total % 60;
-    const period = hour === 0 ? 'tengah malam' : hour < 12 ? 'pagi' : hour < 14 ? 'tengah hari' : hour < 19 ? 'petang' : 'malam';
-    return `${hour % 12 || 12}${minute ? ':' + String(minute).padStart(2, '0') : ''} ${period}`;
-  };
-  if (typeof module !== 'undefined') module.exports = { withinWindow, clockLabel };
   if (typeof document === 'undefined') return;
   const root = document.querySelector('[data-child-tasks]');
   if (!root) return;
@@ -36,7 +19,7 @@
     document.querySelector('[data-today-day]').textContent = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'][now.getDay()];
     for (const task of tasks) {
       const done = task.dataset.completed === '1';
-      task.hidden = !withinWindow(task.dataset.time, now, task.dataset.duration);
+      task.hidden = false;
       task.classList.toggle('task-completed', done);
       const target = done ? completed : pending;
       target.append(task);

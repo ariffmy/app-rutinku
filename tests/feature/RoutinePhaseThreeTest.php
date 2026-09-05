@@ -374,18 +374,32 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
         $service = new RoutineService();
         $ids = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
         $service->create($parentId, $this->routineData($childId, 'Individu saya'), [1]);
+        $listed = $service->listForParent($parentId);
+        $this->assertCount(2, $listed);
+        $groupRows = array_values(array_filter($listed, static fn (array $row): bool => ! empty($row['group_token'])));
+        $this->assertCount(1, $groupRows);
+        $this->assertSame('Semua anak', $groupRows[0]['child_name']);
         $family = (new FamilyModel())->where('name', 'Demo Family')->first();
         $session = $this->parentSession($parentId, (int) $family['id'], 'unused', 'unused');
         $list = $this->withSession($session)->get('/routines');
         $list->assertOK();
         $list->assertSee('Semua anak · sunting bersama');
         $list->assertSee('Individu');
+        $this->assertSame(1, substr_count($list->response()->getBody(), 'Semua anak · sunting bersama'));
         $edit = $this->withSession($session)->get('/routines/' . $ids[0] . '/edit');
         $edit->assertOK();
         $edit->assertSee('Simpan untuk semua anak');
         $edit->assertSee('Child One');
         $edit->assertSee('Child Two');
         $this->assertStringNotContainsString('<select id="child_user_id"', $edit->response()->getBody());
+        $this->assertStringNotContainsString('<label for="child_user_id"', $edit->response()->getBody());
+
+        $taskForm = $this->withSession($session)->get('/routines/' . $ids[0] . '/tasks/new');
+        $taskForm->assertOK();
+        $taskForm->assertDontSee('Untuk siapa?');
+        $this->postRoutineAsParent($parentId, route_to('parent.routine-tasks.create', $ids[0]), $this->taskData('Tugasan kumpulan', 8))
+            ->assertRedirectTo('/routines/' . $ids[0] . '/edit');
+        $this->assertSame(count($ids), (new RoutineTaskModel())->whereIn('routine_id', $ids)->countAllResults());
     }
 
     public function testAllChildrenGetLinkedRoutinesWithIndependentTasks(): void

@@ -39,8 +39,11 @@ class RoutineTaskController extends BaseController
 
         try {
             $service = new RoutineService();
+            $routine = $service->getForParent((int) $parent->id, $routineId);
             $count = 1;
-            if ($this->request->getPost('assign_to') === 'all') {
+            if (! empty($routine['group_token'])) {
+                $count = count($service->createTaskForGroup((int) $parent->id, $routineId, $this->taskInput()));
+            } elseif ($this->request->getPost('assign_to') === 'all') {
                 $count = count($service->createTaskForAllChildren((int) $parent->id, $routineId, $this->taskInput()));
             } else {
                 $service->createTask((int) $parent->id, $routineId, $this->taskInput());

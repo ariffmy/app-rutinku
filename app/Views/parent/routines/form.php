@@ -28,17 +28,15 @@ $isGroup = ! empty($routine['group_token']);
 
 <form action="<?= esc($action) ?>" method="post" class="card border-0 shadow-sm mb-4">
     <?= csrf_field() ?>
+    <?php if ($isGroup): ?><input type="hidden" name="child_user_id" value="<?= esc($routine['child_user_id']) ?>"><?php endif ?>
     <div class="card-body p-4">
         <?php if ($isGroup): ?>
             <div class="alert alert-info">Rutin Semua anak: perubahan nama, hari dan status aktif akan digunakan kepada semua anak dalam kumpulan ini: <?= esc(implode(', ', array_column($routine['group_children'], 'name'))) ?>. Tugasan dan mata kekal berasingan.</div>
         <?php endif ?>
         <div class="row g-3">
+            <?php if (! $isGroup): ?>
             <div class="col-12 col-md-6">
                 <label for="child_user_id" class="form-label">Anak</label>
-                <?php if ($isGroup): ?>
-                    <input type="hidden" name="child_user_id" value="<?= esc($routine['child_user_id']) ?>">
-                    <input id="child_user_id" class="form-control" value="Semua anak (kumpulan asal)" readonly>
-                <?php else: ?>
                 <select id="child_user_id" name="child_user_id" class="form-select" required<?= ! $routine ? ' aria-describedby="child-selection-help"' : '' ?>>
                     <option value="">Pilih Anak</option>
                     <?php if (! $routine && $children !== []): ?>
@@ -48,14 +46,14 @@ $isGroup = ! empty($routine['group_token']);
                         <option value="<?= esc($child['id']) ?>" <?= $selectedChild === (string) $child['id'] ? 'selected' : '' ?>><?= esc($child['name']) ?></option>
                     <?php endforeach ?>
                 </select>
-                <?php endif ?>
                 <?php if (! $routine): ?>
                     <div id="child-selection-help" class="form-text"><?= $children === []
                         ? 'Tiada anak aktif. Tambah atau aktifkan anak dahulu.'
                         : 'Semua anak: cipta rutin berpaut untuk semua anak aktif sekarang. Suntingan nama, hari dan status rutin akan dikemas kini bersama. Tugasan dan mata kekal berasingan.' ?></div>
                 <?php endif ?>
             </div>
-            <div class="col-12 col-md-6">
+            <?php endif ?>
+            <div class="col-12<?= $isGroup ? '' : ' col-md-6' ?>">
                 <label for="name" class="form-label">Nama rutin</label>
                 <input id="name" name="name" class="form-control" maxlength="120" required value="<?= esc(old('name') ?? ($routine['name'] ?? '')) ?>" placeholder="Contoh: Rutin Pagi">
             </div>

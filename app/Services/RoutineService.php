@@ -52,14 +52,27 @@ class RoutineService
             ->orderBy('routines.start_time', 'ASC')
             ->findAll();
 
-        foreach ($routines as &$routine) {
+        // A "Semua anak" routine is stored once per child for independent
+        // progress, but it is one parent-facing routine and must be listed once.
+        $listed = [];
+        $seenGroups = [];
+        foreach ($routines as $routine) {
+            $groupToken = (string) ($routine['group_token'] ?? '');
+            if ($groupToken !== '' && isset($seenGroups[$groupToken])) {
+                continue;
+            }
+            if ($groupToken !== '') {
+                $seenGroups[$groupToken] = true;
+                $routine['child_name'] = 'Semua anak';
+            }
             $routine['days'] = $this->daysForRoutine((int) $routine['id']);
             $routine['task_count'] = ($this->routineTasks ?? new RoutineTaskModel())
                 ->where('routine_id', (int) $routine['id'])
                 ->countAllResults();
+            $listed[] = $routine;
         }
 
-        return $routines;
+        return $listed;
     }
 
     public function getForParent(int $parentUserId, int $routineId): array
@@ -241,6 +254,48 @@ class RoutineService
         }
 
         return (int) $taskId;
+    }
+
+    /** Add the task to every child routine captured in the original group. */
+    public function createTaskForGroup(int $parentUserId, int $routineId, array $data): array
+    {
+        $source = $this->getForParent($parentUserId, $routineId);
+        if (empty($source['group_token'])) {
+            throw new InvalidArgumentException('Rutin ini bukan rutin Semua anak.');
+        }
+
+        $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
+        if ($family === null) {
+            throw new AuthorizationException('Keluarga tidak ditemui.');
+        }
+
+        $members = ($this->routines ?? new RoutineModel())
+            ->where('group_token', $source['group_token'])
+            ->orderBy('id', 'ASC')
+            ->findAll();
+        $ids = [];
+        $tasks = $this->routineTasks ?? new RoutineTaskModel();
+        $this->db->transException(true)->transStart();
+        try {
+            foreach ($members as $member) {
+                $childId = (int) $member['child_user_id'];
+                if (! ($this->authorization ?? new FamilyAuthorizationService())
+                    ->userBelongsToFamily($childId, (int) $family['id'])) {
+                    throw new AuthorizationException('Kumpulan rutin mengandungi anak di luar keluarga ini.');
+                }
+                $taskId = $tasks->insert($this->taskPayload($data, (int) $member['id']), true);
+                if ($taskId === false) {
+                    throw new InvalidArgumentException(implode(' ', $tasks->errors()));
+                }
+                $ids[] = (int) $taskId;
+            }
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return $ids;
     }
 
     /** Copy independently to active children; never assign outside the parent's family. */

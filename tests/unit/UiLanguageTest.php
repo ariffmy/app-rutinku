@@ -6,6 +6,14 @@ use CodeIgniter\Test\CIUnitTestCase;
 
 final class UiLanguageTest extends CIUnitTestCase
 {
+    public function testTransactionBadgeColours(): void
+    {
+        foreach (['task' => 'success', 'reversal' => 'danger', 'bonus' => 'warning', 'reward' => 'info', 'adjustment' => 'secondary', 'unknown' => 'secondary'] as $type => $colour) {
+            $this->assertSame('text-bg-' . $colour, ui_transaction_badge(['type' => $type, 'points' => 5]));
+        }
+        $this->assertSame('text-bg-danger', ui_transaction_badge(['type' => 'adjustment', 'points' => -5]));
+    }
+
     public function testChildAssetsHaveContentVersions(): void
     {
         $path = 'assets/js/child-today.js';
@@ -14,6 +22,19 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringContainsString("ui_asset_url('assets/js/child-today.js')", $view);
         $this->assertStringNotContainsString('data-filter-clock', $view);
         $this->assertStringNotContainsString('Tugasan dalam satu jam', $view);
+        $script = file_get_contents(FCPATH . $path);
+        $this->assertStringNotContainsString('withinWindow', $script);
+        $this->assertStringContainsString('task.hidden = false', $script);
+    }
+
+    public function testCardsUseOneSharedPaddingValue(): void
+    {
+        $css = file_get_contents(FCPATH . 'assets/css/app.css');
+        $this->assertStringContainsString('--rutinku-card-padding: 1rem', $css);
+        $this->assertStringContainsString('padding: var(--rutinku-card-padding) !important', $css);
+        $this->assertStringContainsString('.card > .table-responsive .table > :not(caption) > * > *', $css);
+        $this->assertStringNotContainsString('.child-task-card > .card-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding:', $css);
+        $this->assertStringNotContainsString('.parent-summary-grid .card-body { padding:', $css);
     }
 
     public function testMalaysianDatesAndTimes(): void

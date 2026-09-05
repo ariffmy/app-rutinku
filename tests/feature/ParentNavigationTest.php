@@ -53,7 +53,9 @@ final class ParentNavigationTest extends CIUnitTestCase
         if ($path === '/dashboard') {
             $buttons = $xpath->query('//main//a[contains(concat(" ", normalize-space(@class), " "), " btn ")]');
             $this->assertGreaterThanOrEqual(1, $buttons->length);
-            $this->assertSame(0, $xpath->query('//section[@aria-labelledby="children-heading"]')->length);
+            $this->assertSame(1, $xpath->query('//section[@aria-labelledby="children-heading"]')->length);
+            $this->assertGreaterThanOrEqual(1, $xpath->query('//article[contains(concat(" ", normalize-space(@class), " "), " parent-child-card ")]')->length);
+            $this->assertSame(2, $xpath->query('//section[contains(concat(" ", normalize-space(@class), " "), " parent-summary-grid ")]/div[contains(concat(" ", normalize-space(@class), " "), " card ")]')->length);
             $this->assertSame(1, $xpath->query('//section[@aria-labelledby="activity-heading"]')->length);
             $this->assertStringNotContainsString('<th>Penyelesaian</th>', $html);
             $this->assertStringNotContainsString('<th>Hari Berturut-turut</th>', $html);
@@ -108,7 +110,7 @@ final class ParentNavigationTest extends CIUnitTestCase
     public function testUpdatedNavigationAssetsUseNewPwaCacheVersion(): void
     {
         $worker = file_get_contents(ROOTPATH . 'public/service-worker.js');
-        $this->assertStringContainsString('rutinku-static-v13', $worker);
+        $this->assertStringContainsString('rutinku-static-v17', $worker);
         $this->assertStringContainsString('/assets/css/app.css', $worker);
         $this->assertStringContainsString('/assets/js/app.js', $worker);
     }

@@ -9,6 +9,7 @@ $owner = (new \App\Models\UserModel())->find((int) $routine['child_user_id']);
 $savedTime = (string) $value('task_time');
 $selectedHour = (string) (old('task_hour') ?? ($savedTime === '' ? '' : substr($savedTime, 0, 2)));
 $selectedMinute = (string) (old('task_minute') ?? ($savedTime === '' ? '00' : substr($savedTime, 3, 2)));
+$isGroup = ! empty($routine['group_token']);
 ?>
 <div class="task-editor">
 <a href="<?= route_to('parent.routines.edit', $routine['id']) ?>">← Rutin: <?= esc($routine['name']) ?></a>
@@ -43,9 +44,9 @@ $selectedMinute = (string) (old('task_minute') ?? ($savedTime === '' ? '00' : su
 <fieldset class="task-section"><legend>Berapa bintang? <?= ui_icon('star') ?></legend><label for="points" class="form-label">Mata ganjaran</label>
 <input id="points" name="points" type="number" min="0" max="10000" required class="form-control" value="<?= esc($value('points', 10)) ?>"><input type="range" min="0" max="10000" step="1" class="task-points-range" data-points-range aria-label="Laraskan mata ganjaran" value="<?= esc($value('points', 10)) ?>"><div class="task-chips task-adjust">
 <?php foreach ([-100, -10, -1, 1, 10, 100] as $amount): ?><button type="button" data-points-change="<?= $amount ?>" aria-label="<?= $amount < 0 ? 'Kurangkan' : 'Tambah' ?> <?= abs($amount) ?> mata"><?= $amount > 0 ? '+' : '' ?><?= $amount ?></button><?php endforeach ?></div></fieldset>
-<fieldset class="task-section"><legend>Untuk siapa?</legend><label for="assign_to" class="form-label">Pilih anak</label><select id="assign_to" name="assign_to" class="form-select"><option value="current"><?= esc($owner->name) ?></option>
+<?php if (! $isGroup): ?><fieldset class="task-section"><legend>Untuk siapa?</legend><label for="assign_to" class="form-label">Pilih anak</label><select id="assign_to" name="assign_to" class="form-select"><option value="current"><?= esc($owner->name) ?></option>
 <?php if (! $task): ?><option value="all" <?= old('assign_to') === 'all' ? 'selected' : '' ?>>Semua anak aktif</option><?php endif ?></select>
-<p class="small text-secondary mt-2"><?= $task ? 'Suntingan hanya mengubah tugasan anak ini.' : 'Semua anak: salinan berasingan dalam rutin bernama sama. Rutin akan disalin jika belum ada. Markah dan suntingan setiap anak berasingan.' ?></p></fieldset>
+<p class="small text-secondary mt-2"><?= $task ? 'Suntingan hanya mengubah tugasan anak ini.' : 'Semua anak: salinan berasingan dalam rutin bernama sama. Rutin akan disalin jika belum ada. Markah dan suntingan setiap anak berasingan.' ?></p></fieldset><?php endif ?>
 <details class="task-section"><summary>Tetapan tambahan</summary>
 <?php foreach (['is_required' => 'Tugasan wajib', 'is_active' => 'Tugasan aktif'] as $key => $label): ?><input type="hidden" name="<?= $key ?>" value="0"><div class="form-check form-switch mt-3"><input id="<?= $key ?>" name="<?= $key ?>" value="1" type="checkbox" class="form-check-input" <?= $value($key, 1) ? 'checked' : '' ?>><label for="<?= $key ?>" class="form-check-label"><?= $label ?></label></div><?php endforeach ?></details>
 <div class="task-save"><button type="submit" class="btn btn-primary w-100">Simpan tugasan</button></div>

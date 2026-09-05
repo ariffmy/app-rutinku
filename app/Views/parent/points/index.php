@@ -69,7 +69,7 @@
                                 <?php foreach ($account['history'] as $transaction): ?>
                                     <tr>
                                         <td><?= esc(ui_date($transaction['transaction_date'])) ?></td>
-                                        <td><span class="badge text-bg-light border"><?= esc(ui_label('transaction', $transaction['type'])) ?></span></td>
+                                        <td><span class="badge <?= ui_transaction_badge($transaction) ?>"><?= esc(ui_label('transaction', $transaction['type'])) ?></span></td>
                                         <td><?= esc(ui_point_description($transaction)) ?></td>
                                         <td class="text-end fw-semibold <?= (int) $transaction['points'] >= 0 ? 'text-success' : 'text-danger' ?>">
                                             <?= (int) $transaction['points'] > 0 ? '+' : '' ?><?= esc($transaction['points']) ?>

@@ -54,7 +54,7 @@
                     <div class="list-group-item d-flex justify-content-between align-items-start gap-3 p-3">
                         <div>
                             <div class="fw-semibold"><?= esc(ui_point_description($transaction)) ?></div>
-                            <div class="small text-secondary"><?= esc(ui_date($transaction['transaction_date'])) ?> · <?= esc(ui_label('transaction', $transaction['type'])) ?></div>
+                            <div class="small text-secondary"><?= esc(ui_date($transaction['transaction_date'])) ?> · <span class="badge <?= ui_transaction_badge($transaction) ?>"><?= esc(ui_label('transaction', $transaction['type'])) ?></span></div>
                         </div>
                         <span class="fw-bold <?= (int) $transaction['points'] >= 0 ? 'text-success' : 'text-danger' ?>">
                             <?= (int) $transaction['points'] > 0 ? '+' : '' ?><?= esc($transaction['points']) ?>

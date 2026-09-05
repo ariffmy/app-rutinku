@@ -66,6 +66,7 @@ class ChildController extends BaseController
 
         try {
             $parent = (new AuthService())->currentUser();
+            (new ChildManagementService())->getForParent((int) $parent->id, $childId);
             (new ChildManagementService())->update((int) $parent->id, $childId, $this->payload(true));
 
             return redirect()->to(route_to('parent.children'))->with('success', 'Profil Anak berjaya dikemas kini.');
@@ -99,6 +100,16 @@ class ChildController extends BaseController
         ];
         if ($updating) {
             $payload['is_active'] = $this->request->getPost('is_active');
+        }
+
+        $choice = (string) $this->request->getPost('avatar');
+        if ($choice !== '' && ! array_key_exists($choice, ui_avatar_options())) {
+            throw new \InvalidArgumentException('Pilih avatar yang disediakan.');
+        }
+        $family = (new AuthService())->currentFamily();
+        $image = (new \App\Services\ImageUploadService())->store($this->request->getFile('photo'), (int) $family['id']);
+        if ($image !== null || $choice !== '') {
+            $payload['avatar'] = $image ?? $choice;
         }
 
         return $payload;

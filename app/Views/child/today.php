@@ -5,7 +5,7 @@
 <div data-child-tasks data-csrf-name="<?= esc(csrf_token()) ?>" data-csrf-hash="<?= esc(csrf_hash()) ?>">
     <section class="mb-4" aria-labelledby="pending-heading">
         <h2 id="pending-heading" class="h4" hidden>Belum selesai</h2>
-        <div data-empty-pending class="card border-0 shadow-sm" hidden><div class="card-body p-4 text-secondary">Tiada tugasan dalam waktu ini.</div></div>
+        <div data-empty-pending class="card border-0 shadow-sm" hidden><div class="card-body p-4 text-secondary">Tiada tugasan untuk hari ini.</div></div>
         <div class="row g-3" data-pending></div>
     </section>
     <section class="mb-4" aria-labelledby="completed-heading" data-completed-section hidden>
@@ -15,7 +15,7 @@
     <div data-task-source>
         <?php foreach ($schedule['routines'] as $routine): ?>
             <?php foreach ($routine['tasks'] as $task): ?>
-                <article class="col-12 col-md-6" data-task data-time="<?= esc($task['task_time'] ?? '') ?>" data-duration="<?= esc($task['duration_minutes'] ?? 15) ?>" data-completed="<?= $task['is_completed'] ? '1' : '0' ?>" data-id="<?= esc($task['id']) ?>">
+                <article class="col-12 col-md-6" data-task data-time="<?= esc($task['task_time'] ?? '') ?>" data-completed="<?= $task['is_completed'] ? '1' : '0' ?>" data-id="<?= esc($task['id']) ?>">
                     <div class="card child-task-card border-0 shadow-sm h-100"><div class="card-body">
                         <div class="child-task-details">
                             <h3 class="h6 mb-1" data-task-title><?= esc($task['title']) ?></h3>
@@ -31,7 +31,7 @@
         <?php endforeach ?>
     </div>
 </div>
-<noscript><p class="alert alert-warning">Aktifkan JavaScript untuk penapisan waktu telefon, pengesahan dan kemas kini segera.</p></noscript>
+<noscript><p class="alert alert-warning">Aktifkan JavaScript untuk pengesahan dan kemas kini segera.</p></noscript>
 <dialog id="task-confirm" aria-labelledby="confirm-title">
     <h2 id="confirm-title" class="h4">Pasti ke sudah?</h2>
     <p data-confirm-task></p>

@@ -54,7 +54,7 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
         $this->assertStringContainsString('class="task-stars-count" aria-hidden="true">10</span>', $page->response()->getBody());
         $this->assertStringNotContainsString('Bila-bila masa', $page->response()->getBody());
         $this->assertStringNotContainsString('Bila-bila masa · 15 minit', $page->response()->getBody());
-        $this->assertStringContainsString('data-duration="15"', $page->response()->getBody());
+        $this->assertStringNotContainsString('data-duration=', $page->response()->getBody());
         $this->assertStringNotContainsString('>Pagi</p>', $page->response()->getBody());
         $response = $this->postChild('/child/tasks/' . $task . '/complete', [], true);
         $response->assertOK();

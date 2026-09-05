@@ -81,7 +81,7 @@ class ChildManagementService
             }
             $profileId = $profiles->insert([
                 'user_id' => (int) $childId,
-                'avatar' => null,
+                'avatar' => $data['avatar'] ?? null,
                 'date_of_birth' => $dateOfBirth,
                 'is_ranking_eligible' => $rankingEligible,
             ], true);
@@ -163,13 +163,14 @@ class ChildManagementService
             if ($profile === null) {
                 $profileId = $profiles->insert([
                     'user_id' => $childUserId,
-                    'avatar' => null,
+                    'avatar' => $data['avatar'] ?? null,
                     'date_of_birth' => $dateOfBirth,
                     'is_ranking_eligible' => $rankingEligible,
                 ], true);
             } else {
                 $profileId = (int) $profile['id'];
                 if (! $profiles->update($profileId, [
+                    'avatar' => $data['avatar'] ?? ($profile['avatar'] ?? null),
                     'date_of_birth' => $dateOfBirth,
                     'is_ranking_eligible' => $rankingEligible,
                 ])) {

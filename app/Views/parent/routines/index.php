@@ -37,7 +37,7 @@
                             <div>
                                 <p class="text-secondary small mb-1"><?= esc($routine['child_name']) ?></p>
                                 <h2 class="h4 mb-0"><?= esc($routine['name']) ?></h2>
-                                <span class="badge mt-2 <?= ! empty($routine['group_token']) ? 'text-bg-warning' : 'text-bg-light border' ?>"><?= ! empty($routine['group_token']) ? 'Semua anak · sunting bersama' : (($routine['assignment_scope'] ?? 'legacy') === 'individual' ? 'Individu' : 'Rekod lama · asal tidak direkodkan') ?></span>
+                                <span class="badge mt-2 <?= ! empty($routine['group_token']) ? 'text-bg-warning' : 'text-bg-light border' ?>"><?= ! empty($routine['group_token']) ? 'Semua anak · sunting bersama' : 'Individu' ?></span>
                             </div>
                             <span class="badge align-self-start <?= $routine['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $routine['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
                         </div>
