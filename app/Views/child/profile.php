@@ -37,6 +37,10 @@ $age = $birth && $birth <= $today ? $birth->diff($today)->y . ' tahun' : '—';
         <button class="btn btn-secondary" type="button" data-close-photo>Tutup</button>
     </form>
 </dialog>
+<form action="<?= route_to('child.logout') ?>" method="post" class="mb-3">
+    <?= csrf_field() ?>
+    <button type="submit" class="btn btn-outline-danger w-100">Log keluar</button>
+</form>
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script defer src="<?= ui_asset_url('assets/js/child-profile.js') ?>"></script>

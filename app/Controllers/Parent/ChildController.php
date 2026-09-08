@@ -29,7 +29,8 @@ class ChildController extends BaseController
     public function create()
     {
         if (! $this->validate($this->rules(false))) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            $this->rememberSafeInput();
+            return redirect()->back()->with('errors', $this->validator->getErrors());
         }
 
         try {
@@ -38,7 +39,8 @@ class ChildController extends BaseController
 
             return redirect()->to(route_to('parent.children'))->with('success', 'Anak berjaya ditambah.');
         } catch (Throwable $exception) {
-            return redirect()->back()->withInput()->with('error', $exception->getMessage());
+            $this->rememberSafeInput();
+            return redirect()->back()->with('error', $exception->getMessage());
         }
     }
 
@@ -61,7 +63,8 @@ class ChildController extends BaseController
     public function update(int $childId)
     {
         if (! $this->validate($this->rules(true))) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+            $this->rememberSafeInput();
+            return redirect()->back()->with('errors', $this->validator->getErrors());
         }
 
         try {
@@ -73,7 +76,8 @@ class ChildController extends BaseController
         } catch (AuthorizationException) {
             throw PageNotFoundException::forPageNotFound();
         } catch (Throwable $exception) {
-            return redirect()->back()->withInput()->with('error', $exception->getMessage());
+            $this->rememberSafeInput();
+            return redirect()->back()->with('error', $exception->getMessage());
         }
     }
 
@@ -81,11 +85,17 @@ class ChildController extends BaseController
     {
         $rules = [
             'name' => 'required|max_length[120]',
+            'email' => 'required|valid_email|max_length[190]',
             'date_of_birth' => 'permit_empty|valid_date[Y-m-d]',
             'is_ranking_eligible' => 'required|in_list[0,1]',
         ];
         if ($updating) {
             $rules['is_active'] = 'required|in_list[0,1]';
+            $rules['password'] = 'permit_empty|min_length[8]|max_length[72]';
+            $rules['password_confirm'] = 'matches[password]';
+        } else {
+            $rules['password'] = 'required|min_length[8]|max_length[72]';
+            $rules['password_confirm'] = 'required|matches[password]';
         }
 
         return $rules;
@@ -95,11 +105,15 @@ class ChildController extends BaseController
     {
         $payload = [
             'name' => $this->request->getPost('name'),
+            'email' => $this->request->getPost('email'),
             'date_of_birth' => $this->request->getPost('date_of_birth'),
             'is_ranking_eligible' => $this->request->getPost('is_ranking_eligible'),
         ];
         if ($updating) {
             $payload['is_active'] = $this->request->getPost('is_active');
+        }
+        if ((string) $this->request->getPost('password') !== '') {
+            $payload['password'] = (string) $this->request->getPost('password');
         }
 
         $choice = (string) $this->request->getPost('avatar');
@@ -113,5 +127,12 @@ class ChildController extends BaseController
         }
 
         return $payload;
+    }
+
+    private function rememberSafeInput(): void
+    {
+        $post = $this->request->getPost();
+        unset($post['password'], $post['password_confirm'], $post[csrf_token()]);
+        service('session')->setFlashdata('_ci_old_input', ['get' => [], 'post' => $post]);
     }
 }

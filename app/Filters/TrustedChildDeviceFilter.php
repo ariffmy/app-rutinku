@@ -15,6 +15,10 @@ class TrustedChildDeviceFilter implements FilterInterface
         $context = Services::trustedChildContext();
         $context->clear();
 
+        if ((new \App\Services\AuthService())->resolveChildSessionIntoContext()) {
+            return null;
+        }
+
         $rawToken = (string) $request->getCookie(ChildDeviceService::requestCookieName());
         $devices = new ChildDeviceService();
 

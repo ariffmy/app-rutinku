@@ -31,7 +31,7 @@ class FamilyService
     public function children(int $familyId): array
     {
         return ($this->users ?? new UserModel())
-            ->select('users.id, users.name, users.is_active, child_profiles.avatar, child_profiles.date_of_birth, child_profiles.is_ranking_eligible')
+            ->select('users.id, users.name, users.email, users.is_active, child_profiles.avatar, child_profiles.date_of_birth, child_profiles.is_ranking_eligible')
             ->join('family_users', 'family_users.user_id = users.id')
             ->join('child_profiles', 'child_profiles.user_id = users.id', 'left')
             ->where('family_users.family_id', $familyId)

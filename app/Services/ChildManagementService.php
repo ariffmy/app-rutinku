@@ -55,6 +55,8 @@ class ChildManagementService
     {
         $family = $this->parentFamily($parentUserId);
         $name = $this->validName($data['name'] ?? null);
+        $email = $this->validEmail($data['email'] ?? null, true);
+        $password = $this->validPassword($data['password'] ?? null, true);
         $dateOfBirth = $this->nullableDate($data['date_of_birth'] ?? null);
         $rankingEligible = $this->flag($data['is_ranking_eligible'] ?? 1);
         $users = $this->users ?? new UserModel();
@@ -65,9 +67,9 @@ class ChildManagementService
         try {
             $childId = $users->insert([
                 'name' => $name,
-                'email' => null,
+                'email' => $email,
                 'username' => 'child-' . bin2hex(random_bytes(8)),
-                'password_hash' => password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
+                'password_hash' => password_hash($password ?? bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
                 'role' => UserRole::CHILD->value,
                 'is_active' => 1,
                 'last_login_at' => null,
@@ -117,6 +119,8 @@ class ChildManagementService
     {
         $current = $this->getForParent($parentUserId, $childUserId);
         $name = $this->validName($data['name'] ?? null);
+        $email = $this->validEmail($data['email'] ?? null, true) ?? $current['user']->email;
+        $password = $this->validPassword($data['password'] ?? null, true);
         $dateOfBirth = $this->nullableDate($data['date_of_birth'] ?? null);
         $rankingEligible = $this->flag($data['is_ranking_eligible'] ?? 0);
         $isActive = $this->flag($data['is_active'] ?? 0);
@@ -125,7 +129,11 @@ class ChildManagementService
 
         $this->db->transException(true)->transStart();
         try {
-            if (! $users->update($childUserId, ['name' => $name, 'is_active' => $isActive])) {
+            $userChanges = ['name' => $name, 'email' => $email, 'is_active' => $isActive];
+            if ($password !== null) {
+                $userChanges['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+            }
+            if (! $users->update($childUserId, $userChanges)) {
                 throw new \RuntimeException('Akaun Anak tidak dapat dikemas kini: ' . implode(' ', $users->errors()));
             }
 
@@ -231,6 +239,33 @@ class ChildManagementService
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function validEmail(mixed $value, bool $optional): ?string
+    {
+        $email = mb_strtolower(trim((string) $value));
+        if ($email === '' && $optional) {
+            return null;
+        }
+        if ($email === '' || mb_strlen($email) > 190 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw new \InvalidArgumentException('E-mel Anak mesti alamat e-mel yang sah.');
+        }
+
+        return $email;
+    }
+
+    private function validPassword(mixed $value, bool $optional): ?string
+    {
+        $password = (string) $value;
+        if ($password === '' && $optional) {
+            return null;
+        }
+        $length = strlen($password);
+        if ($length < 8 || $length > 72) {
+            throw new \InvalidArgumentException('Kata laluan Anak mesti antara 8 hingga 72 aksara.');
+        }
+
+        return $password;
     }
 
     private function flag(mixed $value): int

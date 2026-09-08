@@ -20,6 +20,7 @@ $routes->group('child', ['filter' => 'trusted-child-device'], static function (R
     $routes->post('rewards/(:num)/redeem', 'Child\RewardController::redeem/$1', ['as' => 'child.rewards.redeem']);
     $routes->post('tasks/(:num)/complete', 'Child\TaskController::complete/$1', ['as' => 'child.tasks.complete']);
     $routes->post('tasks/(:num)/undo', 'Child\TaskController::undo/$1', ['as' => 'child.tasks.undo']);
+    $routes->post('logout', 'Auth\LoginController::logout', ['as' => 'child.logout']);
 });
 
 $routes->group('', ['filter' => 'parent-auth'], static function (RouteCollection $routes): void {

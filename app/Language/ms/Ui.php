@@ -10,7 +10,7 @@ return [
         'task_hour' => 'Jam mula', 'task_minute' => 'Minit',
         'duration_minutes' => 'Tempoh', 'schedule_type' => 'Kekerapan', 'start_date' => 'Tarikh mula', 'repeat_days' => 'Hari ulangan', 'assign_to' => 'Pilihan anak',
         'name' => 'Nama', 'title' => 'Tajuk', 'description' => 'Penerangan',
-        'email' => 'E-mel', 'password' => 'Kata laluan', 'remember_me' => 'Ingat saya',
+        'email' => 'E-mel', 'password' => 'Kata laluan', 'password_confirm' => 'Pengesahan kata laluan', 'remember_me' => 'Ingat saya',
         'child_user_id' => 'Anak', 'user_id' => 'Pengguna', 'family_id' => 'Keluarga',
         'date_of_birth' => 'Tarikh lahir', 'is_ranking_eligible' => 'Kelayakan kedudukan',
         'is_active' => 'Status aktif', 'device_name' => 'Nama peranti', 'device_type' => 'Jenis peranti',

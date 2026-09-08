@@ -23,19 +23,31 @@ class AuthService
 
     public function loginParent(string $email, string $password, bool $remember = false): bool
     {
+        return $this->loginByEmailForRoles($email, $password, $remember, [UserRole::PARENT]) === UserRole::PARENT;
+    }
+
+    public function loginByEmail(string $email, string $password, bool $remember = false): ?UserRole
+    {
+        return $this->loginByEmailForRoles($email, $password, $remember, [UserRole::PARENT, UserRole::CHILD]);
+    }
+
+    /** @param list<UserRole> $allowedRoles */
+    private function loginByEmailForRoles(string $email, string $password, bool $remember, array $allowedRoles): ?UserRole
+    {
         Services::trustedChildContext()->clear();
         $users = $this->users ?? new UserModel();
         /** @var User|null $user */
         $user = $users->where('email', mb_strtolower(trim($email)))->first();
 
-        $eligibleParent = $user !== null && $user->is_active && $user->roleEnum() === UserRole::PARENT;
+        $role = $user?->roleEnum();
+        $eligibleUser = $user !== null && $user->is_active && $role !== null && in_array($role, $allowedRoles, true);
         $passwordMatches = password_verify(
             $password,
-            $eligibleParent ? (string) $user->password_hash : self::DUMMY_PASSWORD_HASH,
+            $eligibleUser ? (string) $user->password_hash : self::DUMMY_PASSWORD_HASH,
         );
 
-        if (! $eligibleParent || ! $passwordMatches) {
-            return false;
+        if (! $eligibleUser || ! $passwordMatches) {
+            return null;
         }
 
         $family = ($this->families ?? new FamilyService())->currentFamilyForUser((int) $user->id);
@@ -47,18 +59,24 @@ class AuthService
         $session->regenerate(true);
         $session->set([
             'user_id'         => (int) $user->id,
-            'user_role'       => UserRole::PARENT->value,
+            'user_role'       => $role->value,
             'family_id'       => (int) $family['id'],
             'auth_expires_at' => time() + ($remember ? self::REMEMBER_SESSION_SECONDS : self::STANDARD_SESSION_SECONDS),
         ]);
 
         $users->skipValidation(true)->update($user->id, ['last_login_at' => date('Y-m-d H:i:s')]);
 
-        return true;
+        return $role;
     }
 
     public function logoutParent(): void
     {
+        $this->logout();
+    }
+
+    public function logout(): void
+    {
+        Services::trustedChildContext()->clear();
         $session = $this->session ?? service('session');
         $session->remove(['user_id', 'user_role', 'family_id', 'auth_expires_at']);
         $session->destroy();
@@ -81,8 +99,9 @@ class AuthService
 
         /** @var User|null $user */
         $user = ($this->users ?? new UserModel())->find($userId);
+        $sessionRole = UserRole::tryFrom((string) $session->get('user_role'));
 
-        return $user !== null && $user->is_active ? $user : null;
+        return $user !== null && $user->is_active && $sessionRole !== null && $user->roleEnum() === $sessionRole ? $user : null;
     }
 
     public function currentFamily(): ?array
@@ -112,8 +131,40 @@ class AuthService
 
     public function isChild(): bool
     {
+        if (! Services::trustedChildContext()->isResolved()) {
+            $this->resolveChildSessionIntoContext();
+        }
+
         return Services::trustedChildContext()->isResolved()
             && $this->currentUser()?->roleEnum() === UserRole::CHILD
             && $this->currentFamily() !== null;
+    }
+
+    public function resolveChildSessionIntoContext(): bool
+    {
+        $context = Services::trustedChildContext();
+        if ($context->isResolved()) {
+            return $context->child()->roleEnum() === UserRole::CHILD;
+        }
+
+        $session = $this->session ?? service('session');
+        if ($session->get('user_role') !== UserRole::CHILD->value
+            || (int) $session->get('auth_expires_at') < time()) {
+            return false;
+        }
+
+        /** @var User|null $child */
+        $child = ($this->users ?? new UserModel())->find((int) $session->get('user_id'));
+        if ($child === null || ! $child->is_active || $child->roleEnum() !== UserRole::CHILD) {
+            return false;
+        }
+        $family = ($this->families ?? new FamilyService())->currentFamilyForUser((int) $child->id);
+        if ($family === null || (int) $family['id'] !== (int) $session->get('family_id')) {
+            return false;
+        }
+
+        $context->set($child, $family, ['authentication' => 'session']);
+
+        return true;
     }
 }

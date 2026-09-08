@@ -23,6 +23,12 @@ final class PhaseOneAuthorizationTest extends CIUnitTestCase
     protected $seed = DemoSeeder::class;
     protected $refresh = true;
 
+    protected function tearDown(): void
+    {
+        \Config\Services::trustedChildContext()->clear();
+        parent::tearDown();
+    }
+
     public function testBothParentsCanAccessTheSameFamilyDashboard(): void
     {
         $family = (new FamilyModel())->where('name', 'Demo Family')->first();
@@ -66,10 +72,11 @@ final class PhaseOneAuthorizationTest extends CIUnitTestCase
     {
         $routes = service('routes')->loadRoutes();
 
-        foreach (['child/ranking', 'child/siblings', 'child/logout', 'register'] as $path) {
+        foreach (['child/ranking', 'child/siblings', 'register'] as $path) {
             $this->assertArrayNotHasKey($path, $routes->getRoutes('GET'));
             $this->assertArrayNotHasKey($path, $routes->getRoutes('POST'));
         }
+        $this->assertArrayHasKey('child/logout', $routes->getRoutes('POST'));
         $this->assertArrayHasKey('ranking', $routes->getRoutes('GET'));
         $this->assertArrayNotHasKey('ranking', $routes->getRoutes('POST'));
     }
@@ -92,6 +99,16 @@ final class PhaseOneAuthorizationTest extends CIUnitTestCase
         $this->assertTrue($auth->loginParent('parent1@example.com', 'password'));
         $this->assertTrue($auth->isParent());
         $this->assertSame('Demo Family', $auth->currentFamily()['name']);
+    }
+
+    public function testChildCanLoginWithOwnEmailAndReachChildDashboard(): void
+    {
+        $auth = new AuthService();
+        $this->assertSame(\App\Enums\UserRole::CHILD, $auth->loginByEmail('child1@example.com', 'password'));
+        $this->assertTrue($auth->isChild());
+        $this->assertSame('Child One', $auth->currentUser()->name);
+        $this->assertSame('Demo Family', $auth->currentFamily()['name']);
+        $this->get('/child/today')->assertOK();
     }
 
     public function testParentOutsideFamilyCannotManageChild(): void

@@ -9,8 +9,12 @@ class Home extends BaseController
 {
     public function index()
     {
-        if ((new AuthService())->isParent()) {
+        $auth = new AuthService();
+        if ($auth->isParent()) {
             return redirect()->to(route_to('parent.dashboard'));
+        }
+        if ($auth->isChild()) {
+            return redirect()->to(route_to('child.today'));
         }
 
         $rawDeviceToken = (string) $this->request->getCookie(ChildDeviceService::requestCookieName());

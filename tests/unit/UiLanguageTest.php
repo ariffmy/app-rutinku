@@ -37,6 +37,15 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringNotContainsString('.parent-summary-grid .card-body { padding:', $css);
     }
 
+    public function testLoginUsesCardlessPwaLayout(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/auth/login.php');
+        $this->assertStringContainsString('class="auth-content mx-auto"', $view);
+        $this->assertStringNotContainsString('auth-card card', $view);
+        $this->assertStringNotContainsString('card-body', $view);
+        $this->assertStringContainsString('Ibu bapa atau Anak', $view);
+    }
+
     public function testMalaysianDatesAndTimes(): void
     {
         $this->assertSame('04/09/2026', ui_date('2026-09-04'));

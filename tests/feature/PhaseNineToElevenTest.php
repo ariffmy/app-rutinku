@@ -148,7 +148,7 @@ final class PhaseNineToElevenTest extends CIUnitTestCase
         $profilePage->assertSee('Private Child');
         $profilePage->assertDontSee('Child Two');
         $this->assertStringNotContainsString((string) $record['user']->username, $profilePage->response()->getBody());
-        $this->assertArrayNotHasKey('child/logout', service('routes')->loadRoutes()->getRoutes('POST'));
+        $this->assertArrayHasKey('child/logout', service('routes')->loadRoutes()->getRoutes('POST'));
         $this->assertArrayNotHasKey('child/register', service('routes')->loadRoutes()->getRoutes('POST'));
     }
 

@@ -4,7 +4,7 @@
 <header class="mb-4">
     <p class="text-uppercase text-secondary small fw-semibold mb-1"><?= esc($family['name']) ?></p>
     <h1 class="h2 mb-1">Hai, <?= esc($currentUser->name) ?></h1>
-    <p class="text-secondary mb-0">Pantau kemajuan keluarga dan urus rutin, ganjaran serta peranti.</p>
+    <p class="text-secondary mb-0">Pantau kemajuan keluarga dan urus rutin, ganjaran serta akaun Anak.</p>
 </header>
 
 <section class="parent-summary-grid mb-4" aria-label="Ringkasan hari ini">
