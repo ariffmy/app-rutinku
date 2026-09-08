@@ -120,7 +120,7 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
             $this->assertStringContainsString('image/jpeg', $response->response()->getHeaderLine('Content-Type'));
             $this->assertStringContainsString('no-store', $response->response()->getHeaderLine('Cache-Control'));
             service('superglobals')->setCookieArray([]);
-            $this->get('/child/images/' . $name)->assertStatus(401);
+            $this->get('/child/images/' . $name)->assertRedirectTo('/login');
         } finally {
             unlink($directory . '/' . $name);
             if ($createdDirectory) rmdir($directory);

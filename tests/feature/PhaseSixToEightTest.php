@@ -24,6 +24,7 @@ use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 
 /**
  * @internal
@@ -133,6 +134,9 @@ final class PhaseSixToEightTest extends CIUnitTestCase
         $this->assertSame(-25, (int) $rewardTransaction['points']);
         $this->assertSame((int) $redemption['id'], (int) $rewardTransaction['reference_id']);
         $this->assertSame(1, (new AuditLogModel())->where('action', 'reward.approved')->countAllResults());
+        $completed = $rewards->complete($parentId, (int) $redemption['id']);
+        $this->assertSame('completed', $completed['status']);
+        $this->assertSame(1, (new AuditLogModel())->where('action', 'reward.completed')->countAllResults());
 
         try {
             $rewards->approve($parentId, (int) $redemption['id'], $this->today());
@@ -158,6 +162,66 @@ final class PhaseSixToEightTest extends CIUnitTestCase
         $this->assertSame(20, $points->getBalance($childId));
         $this->assertSame(0, (new PointTransactionModel())->where('type', 'reward')->countAllResults());
         $this->assertSame(1, (new AuditLogModel())->where('action', 'reward.rejected')->countAllResults());
+    }
+
+    public function testChildCanCancelOnlyPendingOwnRequestWithoutPointDeduction(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $points = new PointService();
+        $points->manualAdjustment($parentId, $childId, 20, 'Fund cancellation', $this->today());
+        $rewards = new RewardService();
+        $rewardId = $rewards->create($parentId, $this->rewardData('Boleh batal', 10));
+        $redemption = $rewards->requestRedemption($childId, $rewardId, $this->today());
+
+        $cancelled = $rewards->cancel($childId, (int) $redemption['id']);
+        $this->assertSame('cancelled', $cancelled['status']);
+        $this->assertSame(20, $points->getBalance($childId));
+        $this->assertSame(0, (new PointTransactionModel())->where('type', 'reward')->countAllResults());
+        $this->assertSame(1, (new AuditLogModel())->where('action', 'reward.cancelled')->countAllResults());
+        $this->assertSame('pending', $rewards->requestRedemption($childId, $rewardId, $this->today())['status']);
+    }
+
+    public function testDailyRedemptionLimitUsesMalaysiaCalendarAndIgnoresRejectedRequests(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $at = new DateTimeImmutable('2026-09-08 23:30:00', new DateTimeZone(app_timezone()));
+        $points = new PointService();
+        $points->manualAdjustment($parentId, $childId, 100, 'Fund limited reward', $at);
+        $rewards = new RewardService();
+        $rewardId = $rewards->create($parentId, $this->rewardData('Harian', 10) + [
+            'category' => 'Masa Skrin',
+            'redemption_limit' => 'daily',
+        ]);
+
+        $first = $rewards->requestRedemption($childId, $rewardId, $at);
+        $rewards->approve($parentId, (int) $first['id'], $at);
+        try {
+            $rewards->requestRedemption($childId, $rewardId, $at->modify('+20 minutes'));
+            $this->fail('Daily limit must block another request on the same Malaysia date.');
+        } catch (RewardException $exception) {
+            $this->assertStringContainsString('1 kali sehari', $exception->getMessage());
+        }
+
+        $next = $rewards->requestRedemption($childId, $rewardId, $at->modify('+40 minutes'));
+        $this->assertSame('pending', $next['status']);
+    }
+
+    public function testRewardMetadataAndAllowedValuesAreValidated(): void
+    {
+        [$parentId] = $this->demoIds();
+        $rewards = new RewardService();
+        $rewardId = $rewards->create($parentId, $this->rewardData('Permainan', 80) + [
+            'category' => 'Digital',
+            'description' => 'Tambahan masa permainan dengan kebenaran ibu bapa.',
+            'redemption_limit' => 'weekly',
+        ]);
+        $saved = $rewards->getForParent($parentId, $rewardId);
+        $this->assertSame('Digital', $saved['category']);
+        $this->assertSame('weekly', $saved['redemption_limit']);
+        $this->assertStringContainsString('Tambahan masa', $saved['description']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $rewards->create($parentId, $this->rewardData('Tidak sah', 10) + ['category' => 'Kategori bebas']);
     }
 
     public function testApprovalFailsAtomicallyWhenBalanceChangedAfterRequest(): void

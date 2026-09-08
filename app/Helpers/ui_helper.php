@@ -21,12 +21,51 @@ function ui_transaction_badge(array $transaction): string
 
 function ui_icon(string $name, string $label = ''): string
 {
-    $icons = ['star', 'fire', 'gift', 'lightbulb', 'clock', 'check', 'arrow-left', 'bars', 'lock', 'user', 'cat', 'robot', 'rocket', 'sun'];
+    $icons = ['star', 'fire', 'gift', 'lightbulb', 'clock', 'check', 'arrow-left', 'bars', 'lock', 'user', 'cat', 'robot', 'rocket', 'sun', 'utensils', 'tv', 'person-running', 'crown', 'gamepad', 'money-bill-wave', 'wand-magic-sparkles', 'ellipsis'];
     if (! in_array($name, $icons, true)) {
         return '';
     }
     return '<i class="fa-solid fa-' . $name . ' ui-icon" aria-hidden="true"></i>'
         . ($label === '' ? '' : '<span class="visually-hidden">' . esc($label) . '</span>');
+}
+
+function ui_reward_limit(?string $limit): string
+{
+    return [
+        'unlimited' => 'Tiada had',
+        'daily' => '1 kali sehari',
+        'weekly' => '1 kali seminggu',
+        'monthly' => '1 kali sebulan',
+        'once' => 'Sekali sahaja',
+    ][$limit ?? 'unlimited'] ?? 'Tiada had';
+}
+
+function ui_reward_category_icon(?string $category): string
+{
+    $icon = [
+        'Makanan & Minuman' => 'utensils',
+        'Masa Skrin' => 'tv',
+        'Aktiviti' => 'person-running',
+        'Hadiah' => 'gift',
+        'Keistimewaan' => 'crown',
+        'Digital' => 'gamepad',
+        'Wang' => 'money-bill-wave',
+        'Istimewa' => 'wand-magic-sparkles',
+        'Lain-lain' => 'ellipsis',
+    ][$category ?? 'Lain-lain'] ?? 'gift';
+
+    return ui_icon($icon, $category ?? 'Ganjaran');
+}
+
+function ui_redemption_badge(?string $status): string
+{
+    return [
+        'pending' => 'text-bg-warning',
+        'approved' => 'text-bg-success',
+        'rejected' => 'text-bg-danger',
+        'cancelled' => 'text-bg-secondary',
+        'completed' => 'text-bg-info',
+    ][$status ?? ''] ?? 'text-bg-secondary';
 }
 
 /** Display local wall-clock times without changing stored schedule values. */

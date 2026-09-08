@@ -38,4 +38,16 @@ class RewardController extends BaseController
 
         return redirect()->to(route_to('child.rewards'))->with('success', 'Ganjaran telah diminta dan menunggu Ibu bapa.');
     }
+
+    public function cancel(int $redemptionId)
+    {
+        $child = Services::trustedChildContext()->child();
+        try {
+            (new RewardService())->cancel((int) $child->id, $redemptionId);
+        } catch (RewardException $exception) {
+            return redirect()->to(route_to('child.rewards'))->with('error', $exception->getMessage());
+        }
+
+        return redirect()->to(route_to('child.rewards'))->with('success', 'Permohonan ganjaran telah dibatalkan.');
+    }
 }

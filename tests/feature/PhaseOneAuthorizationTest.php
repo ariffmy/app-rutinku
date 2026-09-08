@@ -81,14 +81,11 @@ final class PhaseOneAuthorizationTest extends CIUnitTestCase
         $this->assertArrayNotHasKey('ranking', $routes->getRoutes('POST'));
     }
 
-    public function testChildDashboardFailsClosedUntilDevicePhase(): void
+    public function testChildDashboardRedirectsToEmailLoginWithoutSession(): void
     {
         $response = $this->get('/child/today');
 
-        $response->assertStatus(401);
-        $response->assertSee('Peranti Perlu Disediakan');
-        $response->assertDontSee('Log keluar');
-        $response->assertDontSee('Switch User');
+        $response->assertRedirectTo('/login');
     }
 
     public function testParentLoginUsesPasswordHashAndBuildsValidatedSession(): void

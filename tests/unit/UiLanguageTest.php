@@ -46,6 +46,28 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringContainsString('Ibu bapa atau Anak', $view);
     }
 
+    public function testChildAccountFormCollectsCredentialsWithoutRepopulatingPasswords(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/parent/children/form.php');
+        $controller = file_get_contents(APPPATH . 'Controllers/Parent/ChildController.php');
+        $this->assertStringContainsString('name="email" type="email"', $view);
+        $this->assertStringContainsString('name="password" type="password"', $view);
+        $this->assertStringContainsString('name="password_confirm" type="password"', $view);
+        $this->assertStringContainsString("unset(\$post['password'], \$post['password_confirm']", $controller);
+        $this->assertStringNotContainsString('redirect()->back()->withInput()', $controller);
+    }
+
+    public function testRewardFormUsesControlledMetadataAndImagePreview(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/parent/rewards/form.php');
+        $this->assertStringContainsString('<select id="category"', $view);
+        $this->assertStringNotContainsString('<datalist', $view);
+        $this->assertStringContainsString('<textarea id="description"', $view);
+        $this->assertStringContainsString('<select id="redemption_limit"', $view);
+        $this->assertStringContainsString('data-reward-image-preview', $view);
+        $this->assertFileExists(FCPATH . 'assets/js/reward-form.js');
+    }
+
     public function testMalaysianDatesAndTimes(): void
     {
         $this->assertSame('04/09/2026', ui_date('2026-09-04'));
@@ -58,9 +80,12 @@ final class UiLanguageTest extends CIUnitTestCase
 
     public function testStoredEnumValuesHaveMalayDisplayLabels(): void
     {
-        $this->assertSame('Menunggu kelulusan', ui_label('redemption', 'pending'));
+        $this->assertSame('Menunggu', ui_label('redemption', 'pending'));
         $this->assertSame('Diluluskan', ui_label('redemption', 'approved'));
         $this->assertSame('Ditolak', ui_label('redemption', 'rejected'));
+        $this->assertSame('Dibatalkan', ui_label('redemption', 'cancelled'));
+        $this->assertSame('Selesai', ui_label('redemption', 'completed'));
+        $this->assertSame('1 kali seminggu', ui_reward_limit('weekly'));
         $this->assertSame('Pelarasan', ui_label('transaction', 'adjustment'));
         $this->assertSame('Pembatalan', ui_label('transaction', 'reversal'));
         $this->assertSame('Harian', ui_label('period', 'daily'));

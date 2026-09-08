@@ -3,7 +3,7 @@
 return [
     'unknown' => 'Tidak diketahui',
     'period' => ['daily' => 'Harian', 'weekly' => 'Mingguan', 'monthly' => 'Bulanan'],
-    'redemption' => ['pending' => 'Menunggu kelulusan', 'approved' => 'Diluluskan', 'rejected' => 'Ditolak'],
+    'redemption' => ['pending' => 'Menunggu', 'approved' => 'Diluluskan', 'rejected' => 'Ditolak', 'cancelled' => 'Dibatalkan', 'completed' => 'Selesai'],
     'transaction' => ['task' => 'Tugasan', 'bonus' => 'Bonus', 'reward' => 'Ganjaran', 'adjustment' => 'Pelarasan', 'reversal' => 'Pembatalan'],
     'device' => ['mobile' => 'Telefon', 'browser' => 'Pelayar'],
     'fields' => [
@@ -17,7 +17,7 @@ return [
         'type' => 'Jenis', 'start_time' => 'Masa mula', 'sort_order' => 'Susunan', 'days' => 'Hari',
         'day_of_week' => 'Hari', 'routine_id' => 'Rutin', 'task_time' => 'Masa tugasan',
         'points' => 'Mata', 'points_required' => 'Mata diperlukan', 'reason' => 'Sebab',
-        'is_required' => 'Tugasan wajib', 'image' => 'Imej', 'status' => 'Status',
+        'is_required' => 'Tugasan wajib', 'image' => 'Imej', 'redemption_limit' => 'Had penebusan', 'status' => 'Status',
         'username' => 'Nama pengguna', 'password_hash' => 'Kata laluan', 'role' => 'Peranan',
         'avatar' => 'Gambar profil', 'value' => 'Maklumat',
     ],

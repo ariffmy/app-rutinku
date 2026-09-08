@@ -26,7 +26,7 @@ class RewardRedemptionModel extends Model
         'reward_id' => 'required|is_natural_no_zero',
         'child_user_id' => 'required|is_natural_no_zero',
         'points_used' => 'required|is_natural_no_zero|less_than_equal_to[1000000]',
-        'status' => 'required|in_list[pending,approved,rejected]',
+        'status' => 'required|in_list[pending,approved,rejected,cancelled,completed]',
         'requested_at' => 'required|valid_date[Y-m-d H:i:s]',
         'approved_at' => 'permit_empty|valid_date[Y-m-d H:i:s]',
         'rejected_at' => 'permit_empty|valid_date[Y-m-d H:i:s]',

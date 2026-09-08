@@ -110,7 +110,7 @@ final class ParentNavigationTest extends CIUnitTestCase
     public function testUpdatedNavigationAssetsUseNewPwaCacheVersion(): void
     {
         $worker = file_get_contents(ROOTPATH . 'public/service-worker.js');
-        $this->assertStringContainsString('rutinku-static-v18', $worker);
+        $this->assertStringContainsString('rutinku-static-v19', $worker);
         $this->assertStringContainsString('/assets/css/app.css', $worker);
         $this->assertStringContainsString('/assets/js/app.js', $worker);
     }

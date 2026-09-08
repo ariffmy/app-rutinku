@@ -98,23 +98,20 @@ final class TrustedChildDeviceTest extends CIUnitTestCase
 
         $response = $this->get('/child/today');
 
-        $response->assertStatus(401);
-        $response->assertSee('Peranti Perlu Disediakan');
+        $response->assertRedirectTo('/login');
         $response->assertCookie(ChildDeviceService::COOKIE_NAME);
         $this->assertLessThan(time(), $response->response()->getCookie(ChildDeviceService::COOKIE_NAME)->getExpiresTimestamp());
         $this->assertFalse(Services::trustedChildContext()->isResolved());
         $this->assertSame(1, (new AuditLogModel())->where('action', 'device.revoked')->countAllResults());
     }
 
-    public function testMalformedOrMissingTokenFailsClosedWithoutParentLoginRedirect(): void
+    public function testMalformedOrMissingTokenRedirectsToEmailLogin(): void
     {
         service('superglobals')->setCookie(ChildDeviceService::requestCookieName(), 'not-a-valid-device-token');
 
         $response = $this->get('/child/today');
 
-        $response->assertStatus(401);
-        $response->assertSee('Sila minta ibu bapa menyediakan peranti ini.');
-        $response->assertDontSee('Log Masuk Ibu bapa');
+        $response->assertRedirectTo('/login');
     }
 
     public function testChildOrOutsideFamilyParentCannotProvisionDevice(): void

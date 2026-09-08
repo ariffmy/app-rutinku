@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'rutinku-static-v18';
+const STATIC_CACHE = 'rutinku-static-v19';
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   '/assets/js/app.js',
   '/assets/js/child-today.js',
   '/assets/js/task-form.js',
+  '/assets/js/reward-form.js',
   '/assets/css/task-form.css',
   '/assets/icons/icon-192.png',
   '/assets/icons/icon-512.png',

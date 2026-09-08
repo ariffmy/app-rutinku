@@ -19,6 +19,12 @@ use Throwable;
 
 class RewardService
 {
+    public const CATEGORIES = [
+        'Makanan & Minuman', 'Masa Skrin', 'Aktiviti', 'Hadiah', 'Keistimewaan',
+        'Digital', 'Wang', 'Istimewa', 'Lain-lain',
+    ];
+    public const REDEMPTION_LIMITS = ['unlimited', 'daily', 'weekly', 'monthly', 'once'];
+
     private BaseConnection $db;
 
     public function __construct(
@@ -121,6 +127,7 @@ class RewardService
         foreach ($rewards as &$reward) {
             $reward['has_pending_request'] = isset($pendingRewardIds[(int) $reward['id']]);
             $reward['can_afford'] = $balance >= (int) $reward['points_required'];
+            $reward['limit_message'] = $this->redemptionLimitError($childUserId, $reward, new DateTimeImmutable('now', new DateTimeZone(app_timezone())));
         }
         unset($reward);
 
@@ -157,6 +164,9 @@ class RewardService
 
             if (($this->points ?? new PointService(db: $this->db))->getBalance($childUserId) < (int) $reward['points_required']) {
                 throw new RewardException('Mata belum mencukupi untuk ganjaran ini.');
+            }
+            if ($message = $this->redemptionLimitError($childUserId, $reward, $local)) {
+                throw new RewardException($message);
             }
 
             $redemptionId = ($this->redemptions ?? new RewardRedemptionModel())->insert([
@@ -274,6 +284,67 @@ class RewardService
         return ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
     }
 
+    public function cancel(int $childUserId, int $redemptionId): array
+    {
+        $this->childFamily($childUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockRedemption($redemptionId);
+            $redemption = ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
+            if ($redemption === null || (int) $redemption['child_user_id'] !== $childUserId
+                || $redemption['status'] !== RewardRedemptionStatus::PENDING->value) {
+                throw new RewardException('Hanya permohonan sendiri yang masih Menunggu boleh dibatalkan.');
+            }
+            if (! ($this->redemptions ?? new RewardRedemptionModel())->update($redemptionId, [
+                'status' => RewardRedemptionStatus::CANCELLED->value,
+            ])) {
+                throw new RewardException('Permohonan tidak dapat dibatalkan.');
+            }
+            ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
+                'reward.cancelled', $childUserId, $childUserId, 'reward_redemption', $redemptionId,
+                'Anak membatalkan permohonan ganjaran.',
+                ['status' => RewardRedemptionStatus::PENDING->value],
+                ['status' => RewardRedemptionStatus::CANCELLED->value],
+            );
+            $this->db->transComplete();
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
+    }
+
+    public function complete(int $parentUserId, int $redemptionId): array
+    {
+        $redemption = $this->getRedemptionForParent($parentUserId, $redemptionId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockRedemption($redemptionId);
+            $redemption = ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
+            if ($redemption === null || $redemption['status'] !== RewardRedemptionStatus::APPROVED->value) {
+                throw new RewardException('Hanya ganjaran Diluluskan boleh ditandakan Selesai.');
+            }
+            if (! ($this->redemptions ?? new RewardRedemptionModel())->update($redemptionId, [
+                'status' => RewardRedemptionStatus::COMPLETED->value,
+            ])) {
+                throw new RewardException('Ganjaran tidak dapat ditandakan Selesai.');
+            }
+            ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
+                'reward.completed', $parentUserId, (int) $redemption['child_user_id'], 'reward_redemption', $redemptionId,
+                'Ibu bapa menandakan ganjaran sebagai Selesai.',
+                ['status' => RewardRedemptionStatus::APPROVED->value],
+                ['status' => RewardRedemptionStatus::COMPLETED->value],
+            );
+            $this->db->transComplete();
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
+    }
+
     private function getRedemptionForParent(int $parentUserId, int $redemptionId): array
     {
         $redemption = ($this->redemptions ?? new RewardRedemptionModel())->find($redemptionId);
@@ -310,15 +381,54 @@ class RewardService
 
     private function rewardPayload(array $data, int $familyId): array
     {
+        $category = trim((string) ($data['category'] ?? 'Lain-lain')) ?: 'Lain-lain';
+        $limit = (string) ($data['redemption_limit'] ?? 'unlimited');
+        if (! in_array($category, self::CATEGORIES, true)) {
+            throw new InvalidArgumentException('Kategori ganjaran tidak sah.');
+        }
+        if (! in_array($limit, self::REDEMPTION_LIMITS, true)) {
+            throw new InvalidArgumentException('Had penebusan tidak sah.');
+        }
+
         return [
             'family_id' => $familyId,
             'title' => trim((string) ($data['title'] ?? '')),
-            'category' => trim((string) ($data['category'] ?? 'Lain-lain')) ?: 'Lain-lain',
+            'category' => $category,
             'description' => $this->nullable($data['description'] ?? null),
             'points_required' => (int) ($data['points_required'] ?? 0),
             'image' => $this->nullable($data['image'] ?? null),
+            'redemption_limit' => $limit,
             'is_active' => ! empty($data['is_active']) ? 1 : 0,
         ];
+    }
+
+    private function redemptionLimitError(int $childUserId, array $reward, DateTimeInterface $at): ?string
+    {
+        $limit = (string) ($reward['redemption_limit'] ?? 'unlimited');
+        if ($limit === 'unlimited') {
+            return null;
+        }
+
+        $query = ($this->redemptions ?? new RewardRedemptionModel())
+            ->where('reward_id', (int) $reward['id'])
+            ->where('child_user_id', $childUserId)
+            ->whereIn('status', [RewardRedemptionStatus::APPROVED->value, RewardRedemptionStatus::COMPLETED->value]);
+        $local = $this->localTime($at);
+
+        if ($limit !== 'once') {
+            [$start, $end] = match ($limit) {
+                'daily' => [$local->setTime(0, 0), $local->setTime(0, 0)->modify('+1 day')],
+                'weekly' => [$local->setTime(0, 0)->modify('monday this week'), $local->setTime(0, 0)->modify('monday next week')],
+                'monthly' => [$local->setTime(0, 0)->modify('first day of this month'), $local->setTime(0, 0)->modify('first day of next month')],
+                default => throw new InvalidArgumentException('Had penebusan tidak sah.'),
+            };
+            $query->where('requested_at >=', $start->format('Y-m-d H:i:s'))
+                ->where('requested_at <', $end->format('Y-m-d H:i:s'));
+        }
+
+        return $query->countAllResults() > 0
+            ? 'Had penebusan “' . ui_reward_limit($limit) . '” telah dicapai.'
+            : null;
     }
 
     private function nullable(mixed $value): ?string

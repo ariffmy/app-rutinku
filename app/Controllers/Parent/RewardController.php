@@ -121,12 +121,28 @@ class RewardController extends BaseController
         return redirect()->to(route_to('parent.rewards'))->with('success', 'Penebusan ganjaran telah ditolak.');
     }
 
+    public function complete(int $redemptionId)
+    {
+        $parent = (new AuthService())->currentUser();
+        try {
+            (new RewardService())->complete((int) $parent->id, $redemptionId);
+        } catch (AuthorizationException) {
+            throw PageNotFoundException::forPageNotFound();
+        } catch (RewardException $exception) {
+            return redirect()->to(route_to('parent.rewards'))->with('error', $exception->getMessage());
+        }
+
+        return redirect()->to(route_to('parent.rewards'))->with('success', 'Ganjaran telah ditandakan Selesai.');
+    }
+
     private function rules(): array
     {
         return [
             'title' => 'required|max_length[160]',
-            'category' => 'permit_empty|max_length[80]',
+            'category' => 'required|in_list[' . implode(',', RewardService::CATEGORIES) . ']',
             'points_required' => 'required|is_natural_no_zero|less_than_equal_to[1000000]',
+            'description' => 'permit_empty|max_length[5000]',
+            'redemption_limit' => 'required|in_list[' . implode(',', RewardService::REDEMPTION_LIMITS) . ']',
             'is_active' => 'required|in_list[0,1]',
         ];
     }
@@ -137,6 +153,8 @@ class RewardController extends BaseController
             'title' => $this->request->getPost('title'),
             'category' => $this->request->getPost('category'),
             'points_required' => $this->request->getPost('points_required'),
+            'description' => $this->request->getPost('description'),
+            'redemption_limit' => $this->request->getPost('redemption_limit'),
             'is_active' => $this->request->getPost('is_active'),
         ];
         $image = (new \App\Services\ImageUploadService())->store($this->request->getFile('image_upload'), (int) (new AuthService())->currentFamily()['id']);

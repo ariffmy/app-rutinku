@@ -73,6 +73,13 @@
     });
   });
 
+  document.addEventListener('submit', (event) => {
+    const form = event.target instanceof Element ? event.target.closest('form[data-confirm-message]') : null;
+    if (form && !window.confirm(form.dataset.confirmMessage || 'Teruskan tindakan ini?')) {
+      event.preventDefault();
+    }
+  });
+
   window.addEventListener('appinstalled', () => {
     installPrompt = null;
     installButtons.forEach((button) => button.setAttribute('hidden', ''));

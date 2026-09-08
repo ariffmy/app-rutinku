@@ -26,9 +26,8 @@ class TrustedChildDeviceFilter implements FilterInterface
             return null;
         }
 
-        $response = service('response')
-            ->setStatusCode(401)
-            ->setBody(view('child/device_setup_required'));
+        $response = redirect()->to(route_to('parent.login'))
+            ->with('error', 'Sila log masuk menggunakan e-mel Anak.');
 
         if ($rawToken !== '') {
             $devices->clearCookie($response);

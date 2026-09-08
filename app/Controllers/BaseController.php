@@ -49,7 +49,7 @@ abstract class BaseController extends Controller
             ->setHeader(
                 'Content-Security-Policy',
                 "default-src 'self'; script-src 'self'; script-src-attr 'none'; "
-                . "style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; "
+                . "style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; "
                 . "font-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; "
                 . "object-src 'none'; frame-src 'none'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
             );
