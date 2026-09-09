@@ -23,6 +23,7 @@ class TodayController extends BaseController
             'child' => $context->child(),
             'family' => $context->family(),
             'schedule' => $schedule,
+            'dailyProgress' => (new \App\Services\DailyProgressService())->fromSchedule($schedule),
             'balance' => (new PointService())->getBalance((int) $context->child()->id),
             'rewardGoal' => (new \App\Services\RewardService())->activeGoal((int) $context->child()->id),
             'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),

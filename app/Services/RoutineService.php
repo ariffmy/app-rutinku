@@ -190,7 +190,7 @@ class RoutineService
                     || ! ($this->authorization ?? new FamilyAuthorizationService())->userBelongsToFamily((int) $child->id, (int) $family['id'])) {
                     throw new AuthorizationException('Kumpulan rutin mengandungi anak di luar keluarga ini.');
                 }
-                $payload = $this->routinePayload(array_replace($member, array_intersect_key($data, array_flip(['name', 'is_active', 'requires_approval']))), (int) $member['child_user_id']);
+                $payload = $this->routinePayload(array_replace($member, array_intersect_key($data, array_flip(['name', 'is_active', 'requires_approval', 'is_required']))), (int) $member['child_user_id']);
                 $model = $this->routines ?? new RoutineModel();
                 if (! $model->update((int) $member['id'], $payload)) {
                     throw new InvalidArgumentException(implode(' ', $model->errors()));
@@ -544,6 +544,7 @@ class RoutineService
     private function routinePayload(array $data, int $childUserId): array
     {
         return [
+            'is_required' => (int) (bool) ($data['is_required'] ?? true),
             'child_user_id' => $childUserId,
             'name' => trim((string) ($data['name'] ?? '')),
             'requires_approval' => ! empty($data['requires_approval']) ? 1 : 0,

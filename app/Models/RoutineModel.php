@@ -15,6 +15,7 @@ class RoutineModel extends Model
         'group_token',
         'assignment_scope',
         'requires_approval',
+        'is_required',
         'name',
         'description',
         'type',
@@ -31,5 +32,6 @@ class RoutineModel extends Model
         'sort_order' => 'required|integer|greater_than_equal_to[0]',
         'is_active' => 'required|in_list[0,1]',
         'requires_approval' => 'required|in_list[0,1]',
+        'is_required' => 'if_exist|in_list[0,1]',
     ];
 }

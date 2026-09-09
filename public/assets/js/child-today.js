@@ -61,6 +61,14 @@
       form.closest('[data-task]').dataset.completed = data.completed ? '1' : '0';
       form.closest('[data-task]').dataset.status = data.status || (data.completed ? 'completed' : 'not_completed');
       document.querySelector('[data-balance]').textContent = data.balance;
+      const daily = document.querySelector('[data-daily-progress]');
+      if (daily && data.daily_progress) {
+        daily.querySelector('[data-daily-completed]').textContent = data.daily_progress.completed_count;
+        daily.querySelector('[data-daily-total]').textContent = data.daily_progress.total_count;
+        daily.querySelector('[data-daily-percentage]').textContent = `${data.daily_progress.percentage}%`;
+        daily.querySelector('[data-daily-bar]').value = data.daily_progress.percentage;
+        daily.querySelector('[data-daily-bar]').textContent = `${data.daily_progress.percentage}%`;
+      }
       const goal = document.querySelector('[data-reward-goal]');
       if (goal) {
         const required = Number(goal.dataset.required);

@@ -2,6 +2,7 @@
 <?= $this->section('content') ?>
 <?= view('child/partials/header', ['child' => $child, 'family' => $family, 'profile' => $profile, 'balance' => $balance, 'headerDate' => $schedule['date']]) ?>
 <div data-task-notice role="status" aria-live="polite"></div>
+<?= view('child/partials/daily_progress', ['dailyProgress' => $dailyProgress]) ?>
 <?= view('child/partials/reward_goal', ['rewardGoal' => $rewardGoal, 'balance' => $balance]) ?>
 <div data-child-tasks data-csrf-name="<?= esc(csrf_token()) ?>" data-csrf-hash="<?= esc(csrf_hash()) ?>">
     <section class="mb-4" aria-labelledby="pending-heading">

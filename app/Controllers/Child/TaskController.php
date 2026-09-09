@@ -52,6 +52,7 @@ class TaskController extends BaseController
         if ($this->request->isAJAX()) {
             return $this->response->setJSON(['id' => $taskId, 'status' => $status, 'completed' => $status === 'completed', 'message' => $message,
                 'balance' => (new \App\Services\PointService())->getBalance((int) Services::trustedChildContext()->child()->id),
+                'daily_progress' => (new \App\Services\DailyProgressService())->forChild((int) Services::trustedChildContext()->child()->id, Time::now(app_timezone())),
                 'csrf' => csrf_hash()]);
         }
         return redirect()->to(route_to('child.today'))->with('success', $message);
