@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Exceptions\AuthorizationException;
 use App\Exceptions\RewardException;
 use App\Models\AuditLogModel;
+use App\Models\ChildRewardGoalModel;
 use App\Models\RewardModel;
 use App\Models\RewardRedemptionModel;
 use App\Models\UserModel;
@@ -139,6 +140,78 @@ class RewardService
         ];
     }
 
+    public function activeGoal(int $childUserId): ?array
+    {
+        $family = $this->childFamily($childUserId);
+
+        return (new ChildRewardGoalModel($this->db))
+            ->select('child_reward_goals.*, rewards.title AS reward_title, rewards.points_required')
+            ->join('rewards', 'rewards.id = child_reward_goals.reward_id')
+            ->where('child_id', $childUserId)->where('status', 'active')
+            ->where('rewards.family_id', (int) $family['id'])->where('rewards.is_active', 1)
+            ->first();
+    }
+
+    public function setGoal(int $childUserId, int $rewardId, DateTimeInterface $at): array
+    {
+        $family = $this->childFamily($childUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild($childUserId);
+            $this->availableReward($rewardId, (int) $family['id']);
+            $model = new ChildRewardGoalModel($this->db);
+            $active = $model->where('child_id', $childUserId)->where('status', 'active')->first();
+            if ($active !== null && (int) $active['reward_id'] === $rewardId) {
+                $this->db->transComplete();
+                return $active;
+            }
+            if ($active !== null && ! $model->update($active['id'], ['status' => 'cancelled'])) {
+                throw new RewardException('Sasaran ganjaran tidak dapat diganti.');
+            }
+            $id = $model->insert([
+                'child_id' => $childUserId, 'reward_id' => $rewardId, 'status' => 'active',
+                'started_at' => $this->localTime($at)->format('Y-m-d H:i:s'), 'completed_at' => null,
+            ], true);
+            if ($id === false) {
+                throw new RewardException('Sasaran ganjaran tidak dapat disimpan.');
+            }
+            $goal = $model->find($id);
+            $this->db->transComplete();
+            return $goal;
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
+    public function cancelGoal(int $childUserId, int $goalId): void
+    {
+        $this->childFamily($childUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild($childUserId);
+            // Scope to the submitted goal so a stale page cannot cancel its replacement.
+            $model = new ChildRewardGoalModel($this->db);
+            $goal = $model->where('child_id', $childUserId)->where('status', 'active')->find($goalId);
+            if ($goal === null || ! $model->update($goalId, ['status' => 'cancelled'])) {
+                throw new RewardException('Sasaran ganjaran ini tidak lagi aktif atau bukan milik anda.');
+            }
+            $this->db->transComplete();
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
+    private function availableReward(int $rewardId, int $familyId): array
+    {
+        $reward = ($this->rewards ?? new RewardModel())->find($rewardId);
+        if ($reward === null || ! (bool) $reward['is_active'] || (int) $reward['family_id'] !== $familyId) {
+            throw new RewardException('Ganjaran ini tidak tersedia.');
+        }
+        return $reward;
+    }
+
     public function requestRedemption(int $childUserId, int $rewardId, DateTimeInterface $at): array
     {
         $family = $this->childFamily($childUserId);
@@ -147,11 +220,7 @@ class RewardService
         $this->db->transException(true)->transStart();
         try {
             $this->lockChild($childUserId);
-            $reward = ($this->rewards ?? new RewardModel())->find($rewardId);
-            if ($reward === null || ! (bool) $reward['is_active']
-                || (int) $reward['family_id'] !== (int) $family['id']) {
-                throw new RewardException('Ganjaran ini tidak tersedia.');
-            }
+            $reward = $this->availableReward($rewardId, (int) $family['id']);
 
             $pending = ($this->redemptions ?? new RewardRedemptionModel())
                 ->where('reward_id', $rewardId)
@@ -219,6 +288,16 @@ class RewardService
                 'approved_by_user_id' => $parentUserId,
             ])) {
                 throw new RewardException('Penebusan tidak dapat diluluskan.');
+            }
+
+            // Complete only the matching goal, atomically with the existing point deduction.
+            $goals = new ChildRewardGoalModel($this->db);
+            $goal = $goals->where('child_id', $childUserId)
+                ->where('reward_id', (int) $redemption['reward_id'])->where('status', 'active')->first();
+            if ($goal !== null && ! $goals->update($goal['id'], [
+                'status' => 'completed', 'completed_at' => $local->format('Y-m-d H:i:s'),
+            ])) {
+                throw new RewardException('Sasaran ganjaran tidak dapat diselesaikan.');
             }
 
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
@@ -441,7 +520,8 @@ class RewardService
     private function lockChild(int $childUserId): void
     {
         if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
-            $this->db->query('SELECT id FROM users WHERE id = ? FOR UPDATE', [$childUserId]);
+            $table = $this->db->protectIdentifiers($this->db->prefixTable('users'));
+            $this->db->query("SELECT id FROM {$table} WHERE id = ? FOR UPDATE", [$childUserId]);
         }
     }
 

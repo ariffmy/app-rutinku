@@ -24,6 +24,7 @@ class TodayController extends BaseController
             'family' => $context->family(),
             'schedule' => $schedule,
             'balance' => (new PointService())->getBalance((int) $context->child()->id),
+            'rewardGoal' => (new \App\Services\RewardService())->activeGoal((int) $context->child()->id),
             'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),
             'activeNav' => 'today',
         ]);

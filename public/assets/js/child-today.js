@@ -55,12 +55,22 @@
       const data = await response.json();
       if (data.csrf) {
         root.dataset.csrfHash = data.csrf;
-        root.querySelectorAll('input[type="hidden"]').forEach(input => { if (input.name === root.dataset.csrfName) input.value = data.csrf; });
+        document.querySelectorAll('input[type="hidden"]').forEach(input => { if (input.name === root.dataset.csrfName) input.value = data.csrf; });
       }
       if (!response.ok) throw new Error(data.message || 'Tidak dapat menyimpan tugasan.');
       form.closest('[data-task]').dataset.completed = data.completed ? '1' : '0';
       form.closest('[data-task]').dataset.status = data.status || (data.completed ? 'completed' : 'not_completed');
       document.querySelector('[data-balance]').textContent = data.balance;
+      const goal = document.querySelector('[data-reward-goal]');
+      if (goal) {
+        const required = Number(goal.dataset.required);
+        const percentage = Math.min(100, Math.max(0, Math.floor(data.balance * 100 / Math.max(1, required))));
+        goal.querySelector('[data-goal-balance]').textContent = data.balance;
+        goal.querySelector('[data-goal-remaining]').textContent = Math.max(0, required - data.balance);
+        goal.querySelector('[data-goal-percentage]').textContent = `${percentage}%`;
+        goal.querySelector('[data-goal-progress]').value = percentage;
+        goal.querySelector('[data-goal-progress]').textContent = `${percentage}%`;
+      }
       arrange();
       notice.textContent = data.message;
     } catch (error) {

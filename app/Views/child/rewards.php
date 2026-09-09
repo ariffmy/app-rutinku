@@ -18,6 +18,11 @@
                 <p class="h5 text-primary"><?= ui_icon('star') ?> <?= esc($reward['points_required']) ?> Mata</p>
                 <p class="small text-secondary"><strong>Had:</strong> <?= esc(ui_reward_limit($reward['redemption_limit'] ?? null)) ?></p>
                 <div class="mt-auto">
+                <?php if ($rewardGoal !== null && (int) $rewardGoal['reward_id'] === (int) $reward['id']): ?>
+                    <p class="badge text-bg-success">Sasaran semasa</p>
+                <?php else: ?>
+                    <form class="mb-2" action="<?= route_to('child.reward-goals.set', $reward['id']) ?>" method="post"><?= csrf_field() ?><button class="btn btn-outline-primary w-100" type="submit">Jadikan sasaran</button></form>
+                <?php endif ?>
                 <?php if ($reward['has_pending_request']): ?>
                     <button class="btn btn-warning w-100" disabled>Menunggu Ibu bapa</button>
                 <?php elseif ($reward['limit_message']): ?>

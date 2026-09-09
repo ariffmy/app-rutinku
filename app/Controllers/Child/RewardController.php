@@ -19,8 +19,29 @@ class RewardController extends BaseController
             'child' => $context->child(),
             'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),
             'catalogue' => (new RewardService())->childCatalogue((int) $context->child()->id),
+            'rewardGoal' => (new RewardService())->activeGoal((int) $context->child()->id),
             'activeNav' => 'rewards',
         ]);
+    }
+
+    public function setGoal(int $rewardId)
+    {
+        try {
+            (new RewardService())->setGoal((int) Services::trustedChildContext()->child()->id, $rewardId, Time::now(app_timezone()));
+        } catch (RewardException $exception) {
+            return redirect()->to(route_to('child.rewards'))->with('error', $exception->getMessage());
+        }
+        return redirect()->to(route_to('child.today'))->with('success', 'Sasaran ganjaran telah dipilih.');
+    }
+
+    public function cancelGoal(int $goalId)
+    {
+        try {
+            (new RewardService())->cancelGoal((int) Services::trustedChildContext()->child()->id, $goalId);
+        } catch (RewardException $exception) {
+            return redirect()->to(route_to('child.today'))->with('error', $exception->getMessage());
+        }
+        return redirect()->to(route_to('child.today'))->with('success', 'Sasaran ganjaran telah dibatalkan.');
     }
 
     public function redeem(int $rewardId)
