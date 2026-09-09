@@ -15,16 +15,21 @@
     <div data-task-source>
         <?php foreach ($schedule['routines'] as $routine): ?>
             <?php foreach ($routine['tasks'] as $task): ?>
-                <article class="col-12 col-md-6" data-task data-time="<?= esc($task['task_time'] ?? '') ?>" data-completed="<?= $task['is_completed'] ? '1' : '0' ?>" data-id="<?= esc($task['id']) ?>">
+                <?php $completionStatus = $task['completion_status'] ?? ($task['is_completed'] ? 'completed' : 'not_completed'); ?>
+                <article class="col-12 col-md-6" data-task data-time="<?= esc($task['task_time'] ?? '') ?>" data-completed="<?= $task['is_completed'] ? '1' : '0' ?>" data-status="<?= esc($completionStatus) ?>" data-id="<?= esc($task['id']) ?>">
                     <div class="card child-task-card border-0 shadow-sm h-100"><div class="card-body">
                         <div class="child-task-details">
                             <h3 class="h6 mb-1" data-task-title><?= esc($task['title']) ?></h3>
                             <span class="task-stars" role="img" aria-label="<?= esc($task['points']) ?> bintang"><?= ui_icon('star') ?><span class="task-stars-count" aria-hidden="true"><?= esc($task['points']) ?></span></span>
+                            <span data-status-label class="badge <?= $completionStatus === 'pending' ? 'text-bg-warning' : ($completionStatus === 'rejected' ? 'text-bg-danger' : 'text-bg-success') ?>" <?= $completionStatus === 'not_completed' ? 'hidden' : '' ?>><?= esc(['pending' => 'Menunggu kelulusan', 'rejected' => 'Ditolak', 'completed' => 'Selesai'][$completionStatus] ?? '') ?></span>
+                            <?php if ($completionStatus === 'rejected' && ! empty($task['rejection_reason'])): ?><small class="text-danger"><?= esc($task['rejection_reason']) ?></small><?php endif ?>
                         </div>
+                        <?php if (in_array($completionStatus, ['not_completed', 'completed'], true)): ?>
                             <form method="post" action="<?= route_to($task['is_completed'] ? 'child.tasks.undo' : 'child.tasks.complete', $task['id']) ?>" data-task-form data-complete-url="<?= route_to('child.tasks.complete', $task['id']) ?>" data-undo-url="<?= route_to('child.tasks.undo', $task['id']) ?>">
                                 <?= csrf_field() ?>
                                 <button type="submit" class="btn btn-primary" data-task-button><?= $task['is_completed'] ? 'Batal selesai' : 'Sudah' ?></button>
                             </form>
+                        <?php endif ?>
                     </div></div>
                 </article>
             <?php endforeach ?>

@@ -1,4 +1,11 @@
-const STATIC_CACHE = 'rutinku-static-v19';
+const STATIC_CACHE = 'rutinku-static-v20';
+const WORKER_HOSTNAME = self.location.hostname;
+const IS_LOCAL_DEVELOPMENT = WORKER_HOSTNAME === 'localhost'
+  || WORKER_HOSTNAME === '127.0.0.1'
+  || WORKER_HOSTNAME === '[::1]'
+  || /^10\./.test(WORKER_HOSTNAME)
+  || /^192\.168\./.test(WORKER_HOSTNAME)
+  || /^172\.(1[6-9]|2\d|3[01])\./.test(WORKER_HOSTNAME);
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',
@@ -20,6 +27,11 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  if (IS_LOCAL_DEVELOPMENT) {
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
+
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => cache.addAll(STATIC_ASSETS))
@@ -28,6 +40,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  if (IS_LOCAL_DEVELOPMENT) {
+    event.waitUntil(
+      caches.keys()
+        .then((keys) => Promise.all(keys.filter((key) => key.startsWith('rutinku-')).map((key) => caches.delete(key))))
+        .then(() => self.registration.unregister())
+    );
+    return;
+  }
+
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(
@@ -46,6 +67,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   const url = new URL(request.url);
+  // Never replace local development navigation with the cached offline page.
+  if (IS_LOCAL_DEVELOPMENT) {
+    return;
+  }
+
   if (request.mode === 'navigate') {
     // Authenticated HTML is always fetched from the server and never stored.
     event.respondWith(

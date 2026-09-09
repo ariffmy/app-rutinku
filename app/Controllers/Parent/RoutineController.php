@@ -158,6 +158,7 @@ class RoutineController extends BaseController
             'name' => 'required|max_length[120]',
             'start_time' => 'permit_empty|regex_match[/^(?:[01]\\d|2[0-3]):[0-5]\\d$/]',
             'is_active' => 'required|in_list[0,1]',
+            'requires_approval' => 'required|in_list[0,1]',
             'days' => 'required',
         ];
     }
@@ -168,6 +169,7 @@ class RoutineController extends BaseController
             'child_user_id' => $this->request->getPost('child_user_id'),
             'name' => $this->request->getPost('name'),
             'is_active' => $this->request->getPost('is_active'),
+            'requires_approval' => $this->request->getPost('requires_approval'),
         ];
         if ($this->request->getPost('start_time') !== null) {
             $data['start_time'] = $this->request->getPost('start_time');

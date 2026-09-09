@@ -12,6 +12,8 @@ class RoutineTaskModel extends Model
     protected $useTimestamps = true;
     protected $allowedFields = [
         'routine_id',
+        'task_group_token',
+        'requires_approval',
         'title',
         'description',
         'task_time',
@@ -26,6 +28,8 @@ class RoutineTaskModel extends Model
     ];
     protected $validationRules = [
         'routine_id' => 'required|is_natural_no_zero',
+        'task_group_token' => 'permit_empty|max_length[32]',
+        'requires_approval' => 'required|in_list[0,1]',
         'title' => 'required|max_length[160]',
         'description' => 'permit_empty|max_length[5000]',
         'task_time' => 'permit_empty|regex_match[/^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)?$/]',

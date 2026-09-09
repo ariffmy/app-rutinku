@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Exceptions\AuthorizationException;
 use App\Exceptions\TaskCompletionException;
 use App\Models\AuditLogModel;
 use App\Models\RoutineDayModel;
@@ -59,16 +60,22 @@ class TaskCompletionService
                 'completion_date' => $local->format('Y-m-d'),
                 'completed_at' => $local->format('Y-m-d H:i:s'),
                 'points_awarded' => (int) $task['points'],
+                'status' => ! empty($task['requires_approval']) ? 'pending' : 'completed',
+                'rejection_reason' => null,
+                'reviewed_at' => null,
+                'reviewed_by_user_id' => null,
             ], true);
 
             if ($completionId === false) {
                 throw new TaskCompletionException('Tugasan tidak dapat ditandakan selesai.');
             }
 
-            ($this->points ?? new PointService(db: $this->db))->awardTaskPoints(
-                $childUserId,
-                (int) $completionId,
-            );
+            if (empty($task['requires_approval'])) {
+                ($this->points ?? new PointService(db: $this->db))->awardTaskPoints(
+                    $childUserId,
+                    (int) $completionId,
+                );
+            }
 
             $this->db->transComplete();
         } catch (TaskCompletionException $exception) {
@@ -102,6 +109,10 @@ class TaskCompletionService
 
             if ($completion === null) {
                 throw new TaskCompletionException('Tugasan ini belum disiapkan hari ini atau tidak boleh dibatalkan.');
+            }
+
+            if (($completion['status'] ?? 'completed') !== 'completed') {
+                throw new TaskCompletionException('Hanya tugasan yang telah diterima boleh dibatalkan.');
             }
 
             ($this->points ?? new PointService(db: $this->db))->reverseTaskPoints(
@@ -157,12 +168,15 @@ class TaskCompletionService
         foreach ($schedule['routines'] as &$routine) {
             foreach ($routine['tasks'] as &$task) {
                 $completion = $byTask[(int) $task['id']] ?? null;
-                $task['is_completed'] = $completion !== null;
+                $status = $completion['status'] ?? ($completion === null ? 'not_completed' : 'completed');
+                $task['completion_status'] = $status;
+                $task['rejection_reason'] = $completion['rejection_reason'] ?? null;
+                $task['is_completed'] = $status === 'completed';
                 $task['completion_id'] = $completion === null ? null : (int) $completion['id'];
                 $task['completed_at'] = $completion['completed_at'] ?? null;
                 $task['points_awarded'] = $completion === null ? null : (int) $completion['points_awarded'];
 
-                if ($completion !== null) {
+                if ($status === 'completed') {
                     ++$completed;
                     $snapshotPoints += (int) $completion['points_awarded'];
                     if ((bool) $task['is_required']) {
@@ -186,6 +200,114 @@ class TaskCompletionService
         return $schedule;
     }
 
+    public function pendingForParent(int $parentUserId): array
+    {
+        $parent = ($this->users ?? new UserModel())->find($parentUserId);
+        $family = (new FamilyService())->currentFamilyForUser($parentUserId);
+        if ($parent === null || ! $parent->is_active || $parent->roleEnum() !== UserRole::PARENT || $family === null) {
+            throw new AuthorizationException('Ibu bapa tidak sah.');
+        }
+
+        return $this->db->table('task_completions completion')
+            ->select('completion.*, task.title AS task_title, routine.name AS routine_name, child.name AS child_name')
+            ->join('routine_tasks task', 'task.id = completion.routine_task_id')
+            ->join('routines routine', 'routine.id = task.routine_id')
+            ->join('users child', 'child.id = completion.child_user_id')
+            ->join('family_users membership', 'membership.user_id = child.id')
+            ->where('membership.family_id', (int) $family['id'])
+            ->where('completion.status', 'pending')
+            ->orderBy('completion.completed_at', 'ASC')
+            ->get()->getResultArray();
+    }
+
+    public function approveCompletion(int $parentUserId, int $completionId, DateTimeInterface $at): array
+    {
+        $completion = ($this->completions ?? new TaskCompletionModel())->find($completionId);
+        if ($completion === null || ! (new FamilyAuthorizationService())->parentCanManageChild($parentUserId, (int) $completion['child_user_id'])) {
+            throw new AuthorizationException('Ibu bapa tidak boleh meluluskan penyelesaian ini.');
+        }
+
+        $local = $this->localTime($at);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild((int) $completion['child_user_id']);
+            $this->lockCompletion($completionId);
+            $completion = ($this->completions ?? new TaskCompletionModel())->find($completionId);
+            if ($completion === null || ($completion['status'] ?? 'completed') !== 'pending') {
+                throw new TaskCompletionException('Penyelesaian ini bukan lagi menunggu kelulusan.');
+            }
+            if (! (new FamilyAuthorizationService())->parentCanManageChild($parentUserId, (int) $completion['child_user_id'])) {
+                throw new AuthorizationException('Ibu bapa tidak boleh meluluskan penyelesaian ini.');
+            }
+
+            ($this->points ?? new PointService(db: $this->db))->awardTaskPoints((int) $completion['child_user_id'], $completionId);
+            if (! ($this->completions ?? new TaskCompletionModel())->update($completionId, [
+                'status' => 'completed',
+                'rejection_reason' => null,
+                'reviewed_at' => $local->format('Y-m-d H:i:s'),
+                'reviewed_by_user_id' => $parentUserId,
+            ])) {
+                throw new TaskCompletionException('Kelulusan tidak dapat disimpan.');
+            }
+            ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
+                'task.completion_approved', $parentUserId, (int) $completion['child_user_id'],
+                'task_completion', $completionId, 'Ibu bapa meluluskan penyelesaian tugasan.',
+                ['status' => 'pending'], ['status' => 'completed', 'points_awarded' => (int) $completion['points_awarded']],
+            );
+            $this->db->transComplete();
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return ($this->completions ?? new TaskCompletionModel())->find($completionId);
+    }
+
+    public function rejectCompletion(int $parentUserId, int $completionId, ?string $reason, DateTimeInterface $at): array
+    {
+        $completion = ($this->completions ?? new TaskCompletionModel())->find($completionId);
+        if ($completion === null || ! (new FamilyAuthorizationService())->parentCanManageChild($parentUserId, (int) $completion['child_user_id'])) {
+            throw new AuthorizationException('Ibu bapa tidak boleh menolak penyelesaian ini.');
+        }
+        $reason = trim((string) $reason);
+        if (mb_strlen($reason) > 500) {
+            throw new TaskCompletionException('Sebab penolakan tidak boleh melebihi 500 aksara.');
+        }
+
+        $local = $this->localTime($at);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild((int) $completion['child_user_id']);
+            $this->lockCompletion($completionId);
+            $completion = ($this->completions ?? new TaskCompletionModel())->find($completionId);
+            if ($completion === null || ($completion['status'] ?? 'completed') !== 'pending') {
+                throw new TaskCompletionException('Penyelesaian ini bukan lagi menunggu kelulusan.');
+            }
+            if (! (new FamilyAuthorizationService())->parentCanManageChild($parentUserId, (int) $completion['child_user_id'])) {
+                throw new AuthorizationException('Ibu bapa tidak boleh menolak penyelesaian ini.');
+            }
+            if (! ($this->completions ?? new TaskCompletionModel())->update($completionId, [
+                'status' => 'rejected',
+                'rejection_reason' => $reason === '' ? null : $reason,
+                'reviewed_at' => $local->format('Y-m-d H:i:s'),
+                'reviewed_by_user_id' => $parentUserId,
+            ])) {
+                throw new TaskCompletionException('Penolakan tidak dapat disimpan.');
+            }
+            ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
+                'task.completion_rejected', $parentUserId, (int) $completion['child_user_id'],
+                'task_completion', $completionId, $reason === '' ? 'Ibu bapa menolak penyelesaian tugasan.' : $reason,
+                ['status' => 'pending'], ['status' => 'rejected', 'rejection_reason' => $reason === '' ? null : $reason],
+            );
+            $this->db->transComplete();
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return ($this->completions ?? new TaskCompletionModel())->find($completionId);
+    }
+
     private function eligibleTask(int $childUserId, int $routineTaskId, \DateTimeInterface $date): array
     {
         $task = ($this->routineTasks ?? new RoutineTaskModel())->find($routineTaskId);
@@ -205,6 +327,8 @@ class TaskCompletionService
             throw new TaskCompletionException('Tugasan ini tidak dijadualkan hari ini.');
         }
 
+        $task['requires_approval'] = ! empty($task['requires_approval']) || ! empty($routine['requires_approval']);
+
         return $task;
     }
 
@@ -220,6 +344,13 @@ class TaskCompletionService
     {
         if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
             $this->db->query('SELECT id FROM users WHERE id = ? FOR UPDATE', [$childUserId]);
+        }
+    }
+
+    private function lockCompletion(int $completionId): void
+    {
+        if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
+            $this->db->query('SELECT id FROM task_completions WHERE id = ? FOR UPDATE', [$completionId]);
         }
     }
 

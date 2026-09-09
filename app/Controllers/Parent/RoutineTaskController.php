@@ -125,6 +125,7 @@ class RoutineTaskController extends BaseController
             'points' => 'required|integer|greater_than_equal_to[0]|less_than_equal_to[10000]',
             'is_required' => 'required|in_list[0,1]',
             'is_active' => 'required|in_list[0,1]',
+            'requires_approval' => 'required|in_list[0,1]',
         ];
     }
 
@@ -136,6 +137,7 @@ class RoutineTaskController extends BaseController
             'points' => $this->request->getPost('points'),
             'is_required' => $this->request->getPost('is_required'),
             'is_active' => $this->request->getPost('is_active'),
+            'requires_approval' => $this->request->getPost('requires_approval'),
         ];
         foreach (['duration_minutes', 'schedule_type', 'start_date', 'repeat_days'] as $field) {
             if ($this->request->getPost($field) !== null) {

@@ -46,6 +46,25 @@
   const script = document.querySelector('script[data-service-worker-url]');
   if ('serviceWorker' in navigator && script?.dataset.serviceWorkerUrl) {
     window.addEventListener('load', () => {
+      const hostname = window.location.hostname;
+      const isLocalDevelopment = hostname === 'localhost'
+        || hostname === '127.0.0.1'
+        || hostname === '[::1]'
+        || /^10\./.test(hostname)
+        || /^192\.168\./.test(hostname)
+        || /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+
+      if (isLocalDevelopment) {
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+          .then(() => caches.keys())
+          .then((keys) => Promise.all(keys.filter((key) => key.startsWith('rutinku-')).map((key) => caches.delete(key))))
+          .catch(() => {
+            // Local development remains usable even if browser storage cannot be cleared.
+          });
+        return;
+      }
+
       navigator.serviceWorker.register(script.dataset.serviceWorkerUrl).catch(() => {
         // The application remains fully usable when service-worker registration is unavailable.
       });

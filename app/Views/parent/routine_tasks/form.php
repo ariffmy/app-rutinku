@@ -48,7 +48,9 @@ $isGroup = ! empty($routine['group_token']);
 <?php if (! $task): ?><option value="all" <?= old('assign_to') === 'all' ? 'selected' : '' ?>>Semua anak aktif</option><?php endif ?></select>
 <p class="small text-secondary mt-2"><?= $task ? 'Suntingan hanya mengubah tugasan anak ini.' : 'Semua anak: salinan berasingan dalam rutin bernama sama. Rutin akan disalin jika belum ada. Markah dan suntingan setiap anak berasingan.' ?></p></fieldset><?php endif ?>
 <details class="task-section"><summary>Tetapan tambahan</summary>
-<?php foreach (['is_required' => 'Tugasan wajib', 'is_active' => 'Tugasan aktif'] as $key => $label): ?><input type="hidden" name="<?= $key ?>" value="0"><div class="form-check form-switch mt-3"><input id="<?= $key ?>" name="<?= $key ?>" value="1" type="checkbox" class="form-check-input" <?= $value($key, 1) ? 'checked' : '' ?>><label for="<?= $key ?>" class="form-check-label"><?= $label ?></label></div><?php endforeach ?></details>
+<?php foreach (['is_required' => 'Tugasan wajib', 'is_active' => 'Tugasan aktif'] as $key => $label): ?><input type="hidden" name="<?= $key ?>" value="0"><div class="form-check form-switch mt-3"><input id="<?= $key ?>" name="<?= $key ?>" value="1" type="checkbox" class="form-check-input" <?= $value($key, 1) ? 'checked' : '' ?>><label for="<?= $key ?>" class="form-check-label"><?= $label ?></label></div><?php endforeach ?>
+<input type="hidden" name="requires_approval" value="0"><div class="form-check form-switch mt-3"><input id="requires_approval" name="requires_approval" value="1" type="checkbox" class="form-check-input" <?= $value('requires_approval', 0) ? 'checked' : '' ?>><label for="requires_approval" class="form-check-label">Perlu kelulusan ibu bapa</label></div>
+<p class="small text-secondary mt-2 mb-0">Jika rutin sudah memerlukan kelulusan, semua tugasan di dalamnya tetap perlu diluluskan.</p></details>
 <div class="task-save"><button type="submit" class="btn btn-primary w-100">Simpan tugasan</button></div>
 </form></div>
 <?= $this->endSection() ?>

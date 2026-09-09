@@ -76,6 +76,13 @@ $isGroup = ! empty($routine['group_token']);
                     <label for="is_active" class="form-check-label">Rutin aktif</label>
                 </div>
             </div>
+            <div class="col-12">
+                <input type="hidden" name="requires_approval" value="0">
+                <div class="form-check form-switch">
+                    <input id="requires_approval" name="requires_approval" value="1" type="checkbox" class="form-check-input" <?= (old('requires_approval') ?? ($routine['requires_approval'] ?? 0)) ? 'checked' : '' ?>>
+                    <label for="requires_approval" class="form-check-label">Perlu kelulusan ibu bapa untuk semua tugasan</label>
+                </div>
+            </div>
         </div>
     </div>
     <div class="card-footer bg-white border-0 px-4 pb-4">

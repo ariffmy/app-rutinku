@@ -18,14 +18,24 @@
     document.querySelector('[data-today-date]').textContent = new Intl.DateTimeFormat('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'}).format(now);
     document.querySelector('[data-today-day]').textContent = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'][now.getDay()];
     for (const task of tasks) {
-      const done = task.dataset.completed === '1';
+      const status = task.dataset.status || (task.dataset.completed === '1' ? 'completed' : 'not_completed');
+      const done = status === 'completed';
       task.hidden = false;
       task.classList.toggle('task-completed', done);
       const target = done ? completed : pending;
       target.append(task);
       const form = task.querySelector('form');
-      form.action = done ? form.dataset.undoUrl : form.dataset.completeUrl;
-      form.querySelector('button').textContent = done ? 'Batal selesai' : 'Sudah';
+      if (form) {
+        form.hidden = status === 'pending' || status === 'rejected';
+        form.action = done ? form.dataset.undoUrl : form.dataset.completeUrl;
+        form.querySelector('button').textContent = done ? 'Batal selesai' : 'Sudah';
+      }
+      const label = task.querySelector('[data-status-label]');
+      if (label) {
+        label.hidden = status === 'not_completed';
+        label.textContent = { completed: 'Selesai', pending: 'Menunggu kelulusan', rejected: 'Ditolak' }[status] || '';
+        label.className = `badge ${status === 'pending' ? 'text-bg-warning' : status === 'rejected' ? 'text-bg-danger' : 'text-bg-success'}`;
+      }
     }
     const hasPendingTasks = [...pending.children].some(task => !task.hidden);
     root.querySelector('[data-empty-pending]').hidden = hasPendingTasks;
@@ -49,6 +59,7 @@
       }
       if (!response.ok) throw new Error(data.message || 'Tidak dapat menyimpan tugasan.');
       form.closest('[data-task]').dataset.completed = data.completed ? '1' : '0';
+      form.closest('[data-task]').dataset.status = data.status || (data.completed ? 'completed' : 'not_completed');
       document.querySelector('[data-balance]').textContent = data.balance;
       arrange();
       notice.textContent = data.message;

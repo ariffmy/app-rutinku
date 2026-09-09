@@ -14,6 +14,7 @@ class RoutineModel extends Model
         'child_user_id',
         'group_token',
         'assignment_scope',
+        'requires_approval',
         'name',
         'description',
         'type',
@@ -29,5 +30,6 @@ class RoutineModel extends Model
         'start_time' => 'permit_empty|regex_match[/^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)?$/]',
         'sort_order' => 'required|integer|greater_than_equal_to[0]',
         'is_active' => 'required|in_list[0,1]',
+        'requires_approval' => 'required|in_list[0,1]',
     ];
 }

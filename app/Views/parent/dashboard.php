@@ -12,6 +12,38 @@
     <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="small text-secondary mb-1">Pendahulu Hari Ini</p><p class="h5 mb-0"><?= isset($todayRanking['rows'][0]) ? esc($todayRanking['rows'][0]['name']) : '—' ?></p></div></div>
 </section>
 
+<section class="mb-5" aria-labelledby="pending-approvals-heading">
+    <h2 id="pending-approvals-heading" class="h4 mb-3">Kelulusan tugasan menunggu</h2>
+    <?php if ($pendingApprovals === []): ?>
+        <div class="card border-0 shadow-sm"><div class="card-body text-secondary">Tiada penyelesaian tugasan menunggu kelulusan.</div></div>
+    <?php else: ?>
+        <div class="vstack gap-3">
+            <?php foreach ($pendingApprovals as $approval): ?>
+                <article class="card border-0 shadow-sm"><div class="card-body">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                        <div>
+                            <h3 class="h5 mb-1"><?= esc($approval['task_title']) ?></h3>
+                            <p class="mb-1"><strong><?= esc($approval['child_name']) ?></strong> · <?= esc($approval['routine_name']) ?></p>
+                            <p class="small text-secondary mb-0"><?= esc(ui_datetime($approval['completed_at'])) ?> · <?= esc($approval['points_awarded']) ?> mata</p>
+                        </div>
+                        <div class="d-flex flex-column gap-2">
+                            <form method="post" action="<?= route_to('parent.task-completions.approve', $approval['id']) ?>">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-primary w-100">Luluskan</button>
+                            </form>
+                            <form method="post" action="<?= route_to('parent.task-completions.reject', $approval['id']) ?>" class="d-flex flex-column flex-sm-row gap-2">
+                                <?= csrf_field() ?>
+                                <input name="rejection_reason" maxlength="500" class="form-control" placeholder="Sebab penolakan (pilihan)" aria-label="Sebab penolakan">
+                                <button type="submit" class="btn btn-outline-danger">Tolak</button>
+                            </form>
+                        </div>
+                    </div>
+                </div></article>
+            <?php endforeach ?>
+        </div>
+    <?php endif ?>
+</section>
+
 <section class="mb-5" aria-labelledby="children-heading">
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
         <h2 id="children-heading" class="h4 mb-0">Anak-anak</h2>

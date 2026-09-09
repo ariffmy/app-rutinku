@@ -26,6 +26,8 @@ $routes->group('child', ['filter' => 'trusted-child-device'], static function (R
 
 $routes->group('', ['filter' => 'parent-auth'], static function (RouteCollection $routes): void {
     $routes->get('dashboard', 'Parent\DashboardController::index', ['as' => 'parent.dashboard']);
+    $routes->post('task-completions/(:num)/approve', 'Parent\ApprovalController::approve/$1', ['as' => 'parent.task-completions.approve']);
+    $routes->post('task-completions/(:num)/reject', 'Parent\ApprovalController::reject/$1', ['as' => 'parent.task-completions.reject']);
     $routes->get('family-images/(:segment)', 'FamilyImageController::parentImage/$1', ['as' => 'parent.image']);
     $routes->get('children', 'Parent\ChildController::index', ['as' => 'parent.children']);
     $routes->get('children/new', 'Parent\ChildController::new', ['as' => 'parent.children.new']);

@@ -7,6 +7,7 @@ use App\Services\AuthService;
 use App\Services\ChildActivityService;
 use App\Services\FamilyService;
 use App\Services\RankingService;
+use App\Services\TaskCompletionService;
 use App\Models\PointTransactionModel;
 use App\Models\RewardRedemptionModel;
 use DateTimeImmutable;
@@ -52,6 +53,7 @@ class DashboardController extends BaseController
             'activities' => (new ChildActivityService())->recentForParent((int) $auth->currentUser()->id),
             'todayRanking' => $ranking,
             'pendingRewards' => $pendingRewards,
+            'pendingApprovals' => (new TaskCompletionService())->pendingForParent((int) $auth->currentUser()->id),
             'children' => $children,
         ]);
     }

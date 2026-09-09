@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Database\Seeds\DemoSeeder;
 use App\Exceptions\TaskCompletionException;
+use App\Exceptions\AuthorizationException;
+use App\Models\FamilyUserModel;
 use App\Models\AuditLogModel;
 use App\Models\FamilyModel;
 use App\Models\RoutineModel;
@@ -12,6 +14,7 @@ use App\Models\TaskCompletionModel;
 use App\Models\UserModel;
 use App\Services\ChildDeviceService;
 use App\Services\RoutineService;
+use App\Services\PointService;
 use App\Services\TaskCompletionService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -109,6 +112,59 @@ final class TaskCompletionPhaseFourTest extends CIUnitTestCase
             ->where('routine_task_id', $taskId)
             ->where('completion_date', '2026-09-07')
             ->countAllResults());
+    }
+
+    public function testParentApprovalAwardsExactlyOnceAndRejectsOutsideFamily(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        [$taskId, $monday] = $this->scheduledTask($parentId, $childId, 9);
+        (new RoutineTaskModel())->update($taskId, ['requires_approval' => 1]);
+        $service = new TaskCompletionService();
+        $before = (new PointService())->getBalance($childId);
+
+        $completion = $service->completeTask($childId, $taskId, $monday);
+        $this->assertSame('pending', $completion['status']);
+        $this->assertSame($before, (new PointService())->getBalance($childId));
+
+        try {
+            $service->completeTask($childId, $taskId, $monday);
+            $this->fail('Pending completion must still prevent duplicates.');
+        } catch (TaskCompletionException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $outsideParentId = (int) (new UserModel())->insert([
+            'name' => 'Outside Parent', 'email' => 'outside-approval@example.com',
+            'password_hash' => password_hash('password', PASSWORD_DEFAULT), 'role' => 'parent', 'is_active' => 1,
+        ], true);
+        $outsideFamilyId = (int) (new FamilyModel())->insert(['name' => 'Outside Approval Family'], true);
+        (new FamilyUserModel())->insert(['family_id' => $outsideFamilyId, 'user_id' => $outsideParentId]);
+        try {
+            $service->approveCompletion($outsideParentId, (int) $completion['id'], $monday);
+            $this->fail('Another family must not approve this completion.');
+        } catch (AuthorizationException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $approved = $service->approveCompletion($parentId, (int) $completion['id'], $monday);
+        $this->assertSame('completed', $approved['status']);
+        $this->assertSame($before + 9, (new PointService())->getBalance($childId));
+        try {
+            $service->approveCompletion($parentId, (int) $completion['id'], $monday);
+            $this->fail('A completion must not be approved twice.');
+        } catch (TaskCompletionException) {
+            $this->addToAssertionCount(1);
+        }
+        $this->assertSame($before + 9, (new PointService())->getBalance($childId));
+
+        [$rejectedTaskId, , $approvalRoutineId] = $this->scheduledTask($parentId, $childId, 7);
+        (new RoutineModel())->update($approvalRoutineId, ['requires_approval' => 1]);
+        $rejectedCompletion = $service->completeTask($childId, $rejectedTaskId, $monday);
+        $this->assertSame('pending', $rejectedCompletion['status']);
+        $rejected = $service->rejectCompletion($parentId, (int) $rejectedCompletion['id'], 'Belum siap sepenuhnya', $monday);
+        $this->assertSame('rejected', $rejected['status']);
+        $this->assertSame('Belum siap sepenuhnya', $rejected['rejection_reason']);
+        $this->assertSame($before + 9, (new PointService())->getBalance($childId));
     }
 
     public function testCompletionKeepsPointSnapshotWhenTaskConfigurationChanges(): void

@@ -190,7 +190,7 @@ class RoutineService
                     || ! ($this->authorization ?? new FamilyAuthorizationService())->userBelongsToFamily((int) $child->id, (int) $family['id'])) {
                     throw new AuthorizationException('Kumpulan rutin mengandungi anak di luar keluarga ini.');
                 }
-                $payload = $this->routinePayload(array_replace($member, array_intersect_key($data, array_flip(['name', 'is_active']))), (int) $member['child_user_id']);
+                $payload = $this->routinePayload(array_replace($member, array_intersect_key($data, array_flip(['name', 'is_active', 'requires_approval']))), (int) $member['child_user_id']);
                 $model = $this->routines ?? new RoutineModel();
                 if (! $model->update((int) $member['id'], $payload)) {
                     throw new InvalidArgumentException(implode(' ', $model->errors()));
@@ -275,6 +275,7 @@ class RoutineService
             ->findAll();
         $ids = [];
         $tasks = $this->routineTasks ?? new RoutineTaskModel();
+        $taskGroupToken = bin2hex(random_bytes(16));
         $this->db->transException(true)->transStart();
         try {
             foreach ($members as $member) {
@@ -283,7 +284,9 @@ class RoutineService
                     ->userBelongsToFamily($childId, (int) $family['id'])) {
                     throw new AuthorizationException('Kumpulan rutin mengandungi anak di luar keluarga ini.');
                 }
-                $taskId = $tasks->insert($this->taskPayload($data, (int) $member['id']), true);
+                $taskId = $tasks->insert($this->taskPayload($data, (int) $member['id']) + [
+                    'task_group_token' => $taskGroupToken,
+                ], true);
                 if ($taskId === false) {
                     throw new InvalidArgumentException(implode(' ', $tasks->errors()));
                 }
@@ -356,12 +359,98 @@ class RoutineService
     {
         $task = $this->getTaskForParent($parentUserId, $taskId);
         $tasks = $this->routineTasks ?? new RoutineTaskModel();
+        $routine = $task['routine'];
 
-        if (! $tasks->update($taskId, $this->taskPayload(array_replace($task, $data), (int) $task['routine_id']))) {
-            throw new InvalidArgumentException(implode(' ', $tasks->errors()));
+        if (empty($routine['group_token'])) {
+            if (! $tasks->update($taskId, $this->taskPayload(array_replace($task, $data), (int) $task['routine_id']))) {
+                throw new InvalidArgumentException(implode(' ', $tasks->errors()));
+            }
+
+            return (int) $task['routine_id'];
+        }
+
+        $members = ($this->routines ?? new RoutineModel())
+            ->where('group_token', $routine['group_token'])
+            ->orderBy('id', 'ASC')
+            ->findAll();
+        $memberIds = array_map(static fn (array $member): int => (int) $member['id'], $members);
+        $linkedTasks = $this->linkedGroupTasks($task, $memberIds);
+        $taskGroupToken = $task['task_group_token'] ?: bin2hex(random_bytes(16));
+
+        $this->db->transException(true)->transStart();
+        try {
+            foreach ($linkedTasks as $linkedTask) {
+                $payload = $this->taskPayload(array_replace($linkedTask, $data), (int) $linkedTask['routine_id']) + [
+                    'task_group_token' => $taskGroupToken,
+                ];
+                if (! $tasks->update((int) $linkedTask['id'], $payload)) {
+                    throw new InvalidArgumentException(implode(' ', $tasks->errors()));
+                }
+            }
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
         }
 
         return (int) $task['routine_id'];
+    }
+
+    /** Find every copy of a grouped task, including copies made before task tokens existed. */
+    private function linkedGroupTasks(array $sourceTask, array $memberRoutineIds): array
+    {
+        $tasks = $this->routineTasks ?? new RoutineTaskModel();
+        if (! empty($sourceTask['task_group_token'])) {
+            $matches = $tasks
+                ->where('task_group_token', $sourceTask['task_group_token'])
+                ->whereIn('routine_id', $memberRoutineIds)
+                ->findAll();
+            if (count($matches) !== count($memberRoutineIds)) {
+                throw new InvalidArgumentException('Salinan tugasan kumpulan tidak lengkap dan tidak boleh disunting serentak.');
+            }
+
+            return $matches;
+        }
+
+        $signatureFields = [
+            'title', 'description', 'task_time', 'duration_minutes', 'schedule_type',
+            'start_date', 'repeat_days', 'points', 'is_required', 'sort_order', 'is_active',
+        ];
+        $sourceSequence = $tasks
+            ->where('routine_id', (int) $sourceTask['routine_id'])
+            ->orderBy('id', 'ASC')
+            ->findAll();
+        $sourcePosition = array_search((int) $sourceTask['id'], array_map('intval', array_column($sourceSequence, 'id')), true);
+        $matches = [];
+        foreach ($memberRoutineIds as $routineId) {
+            $routineTasks = $tasks->where('routine_id', $routineId)->orderBy('id', 'ASC')->findAll();
+            $candidates = $routineTasks;
+            $candidates = array_values(array_filter(
+                $candidates,
+                static function (array $candidate) use ($sourceTask, $signatureFields): bool {
+                    foreach ($signatureFields as $field) {
+                        if ((string) ($candidate[$field] ?? '') !== (string) ($sourceTask[$field] ?? '')) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                },
+            ));
+            if (count($candidates) === 1) {
+                $matches[] = $candidates[0];
+                continue;
+            }
+
+            // A copy may already have been edited before grouping support existed.
+            // Its insertion position remains the safest link when every member has the same task count.
+            if ($sourcePosition === false || count($routineTasks) !== count($sourceSequence) || ! isset($routineTasks[$sourcePosition])) {
+                throw new InvalidArgumentException('Salinan tugasan lama tidak dapat dikenal pasti dengan selamat. Pastikan setiap rutin mempunyai satu salinan tugasan yang sama.');
+            }
+            $matches[] = $routineTasks[$sourcePosition];
+        }
+
+        return $matches;
     }
 
     public function deleteTask(int $parentUserId, int $taskId): array
@@ -457,6 +546,7 @@ class RoutineService
         return [
             'child_user_id' => $childUserId,
             'name' => trim((string) ($data['name'] ?? '')),
+            'requires_approval' => ! empty($data['requires_approval']) ? 1 : 0,
             'description' => $this->normalizeNullable($data['description'] ?? null),
             'type' => $this->normalizeNullable($data['type'] ?? null),
             'start_time' => $this->normalizeTime($data['start_time'] ?? null),
@@ -472,6 +562,7 @@ class RoutineService
         return [
             'routine_id' => $routineId,
             'title' => trim((string) ($data['title'] ?? '')),
+            'requires_approval' => ! empty($data['requires_approval']) ? 1 : 0,
             'description' => $this->normalizeNullable($data['description'] ?? null),
             'task_time' => $this->normalizeTime($data['task_time'] ?? null),
             'points' => (int) ($data['points'] ?? 0),

@@ -402,6 +402,41 @@ final class RoutinePhaseThreeTest extends CIUnitTestCase
         $this->assertSame(count($ids), (new RoutineTaskModel())->whereIn('routine_id', $ids)->countAllResults());
     }
 
+    public function testEditingGroupedTaskUpdatesEveryChildCopy(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $routineIds = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
+        $taskIds = $service->createTaskForGroup($parentId, $routineIds[0], $this->taskData('Mandi & gosok gigi', 8));
+
+        $service->updateTask($parentId, $taskIds[0], ['title' => 'Mandi petang & gosok gigi']);
+
+        $copies = (new RoutineTaskModel())->whereIn('routine_id', $routineIds)->findAll();
+        $this->assertCount(count($routineIds), $copies);
+        $this->assertSame(['Mandi petang & gosok gigi'], array_values(array_unique(array_column($copies, 'title'))));
+        $this->assertCount(1, array_unique(array_column($copies, 'task_group_token')));
+        $this->assertNotEmpty($copies[0]['task_group_token']);
+    }
+
+    public function testEditingLegacyGroupedTaskLinksAndUpdatesMatchingCopies(): void
+    {
+        [$parentId, $childId] = $this->demoIds();
+        $service = new RoutineService();
+        $routineIds = $service->createForAllChildren($parentId, $this->routineData($childId), [1]);
+        $taskIds = [];
+        foreach ($routineIds as $routineId) {
+            $taskIds[] = $service->createTask($parentId, $routineId, $this->taskData('Tugasan lama', 5));
+        }
+        (new RoutineTaskModel())->update($taskIds[0], ['title' => 'Salinan ini pernah disunting']);
+
+        $service->updateTask($parentId, $taskIds[0], ['title' => 'Tugasan lama dikemas kini']);
+
+        $copies = (new RoutineTaskModel())->whereIn('id', $taskIds)->findAll();
+        $this->assertSame(['Tugasan lama dikemas kini'], array_values(array_unique(array_column($copies, 'title'))));
+        $this->assertCount(1, array_unique(array_column($copies, 'task_group_token')));
+        $this->assertNotEmpty($copies[0]['task_group_token']);
+    }
+
     public function testAllChildrenGetLinkedRoutinesWithIndependentTasks(): void
     {
         [$parentId, $childId] = $this->demoIds();
