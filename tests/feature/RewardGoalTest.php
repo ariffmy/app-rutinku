@@ -190,6 +190,20 @@ final class RewardGoalTest extends CIUnitTestCase
         (new RewardService())->setGoal($child, $reward, Time::now(app_timezone()));
     }
 
+    public function testMigrationRetryPreservesGoalsAndRestoresMissingIndex(): void
+    {
+        [$parent, $child] = $this->ids();
+        $goal = (new RewardService())->setGoal($child, $this->reward($parent), Time::now(app_timezone()));
+        // Reproduce the persisted table left behind by a failed index creation.
+        $this->db->query('DROP INDEX child_reward_goals_one_active');
+        require_once APPPATH . 'Database/Migrations/2026-09-09-000021_CreateChildRewardGoals.php';
+        $migration = new \App\Database\Migrations\CreateChildRewardGoals();
+        $migration->up();
+        $migration->up();
+        $this->assertSame($goal['id'], (new RewardService())->activeGoal($child)['id']);
+        $this->assertArrayHasKey('child_reward_goals_one_active', $this->db->getIndexData('child_reward_goals'));
+    }
+
     public function testDatabaseRejectsSecondActiveGoal(): void
     {
         [$parent, $child] = $this->ids();
