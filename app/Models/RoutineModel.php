@@ -16,6 +16,7 @@ class RoutineModel extends Model
         'assignment_scope',
         'requires_approval',
         'is_required',
+        'perfect_day_eligible',
         'name',
         'description',
         'type',
@@ -33,5 +34,6 @@ class RoutineModel extends Model
         'is_active' => 'required|in_list[0,1]',
         'requires_approval' => 'required|in_list[0,1]',
         'is_required' => 'if_exist|in_list[0,1]',
+        'perfect_day_eligible' => 'if_exist|in_list[0,1]',
     ];
 }
