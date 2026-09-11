@@ -110,8 +110,14 @@ Before migrating a live upgrade, take a database backup and verify its restore p
 2. Both Parents see the same family.
 3. Provision, use, revoke, and reset each Child device.
 4. Complete and undo a task; verify the ledger and points.
-5. Add an adjustment with an audit entry.
-6. Request, approve, and reject rewards.
-7. Verify daily, weekly, monthly ranking and reports.
-8. Verify no Child route exposes siblings, ranking, reports, logout, registration, or switching.
-9. Verify PWA installation and offline fallback on Parent and Child phones.
+5. Complete an approval-required task; verify pending adds no points and approval adds points once.
+6. Verify Daily Progress and one Perfect Day bonus.
+7. Set and replace a Reward Goal; verify no points are deducted before redemption.
+8. Unlock an Achievement and complete a Weekly Mission; verify each bonus has one ledger row.
+9. Add a new Child after creating a Semua anak routine; verify routine days and tasks are copied once.
+10. Change a Child password without changing their email and verify login plus show/hide controls.
+11. Add an adjustment with an audit entry.
+12. Request, approve, and reject rewards.
+13. Verify daily, weekly, monthly ranking and reports.
+14. Verify no Child route exposes siblings, ranking, reports, registration, or switching.
+15. Verify PWA installation and offline fallback on Parent and Child phones.

@@ -1,16 +1,19 @@
 # RutinKu
 
-RutinKu ialah Progressive Web App (PWA) mobile-first untuk mengurus rutin keluarga. Implementasi **Phase 1–11 telah lengkap** menggunakan CodeIgniter 4.7+, PHP 8.2+, dan MySQL/MariaDB.
+RutinKu ialah Progressive Web App (PWA) mobile-first untuk mengurus rutin keluarga. Teras Phase 1–11 dan ciri lanjutan semasa dibina menggunakan CodeIgniter 4.7+, PHP 8.2+, dan MySQL/MariaDB.
 
 ## Fungsi siap
 
-- Parent login, family authorization, Child management, dan trusted-device mode.
-- Rutin/task, complete/undo, append-only points, streak, rewards, dan approvals.
+- Parent/Child login, family authorization, Child management, trusted-device mode, dan show/hide password.
+- Rutin/task, complete/undo, approval, progress harian, Perfect Day, dan streak.
+- Append-only points ledger dengan source idempotent untuk completion, Perfect Day, achievement, misi, dan penebusan ganjaran.
+- Reward Goal tanpa potongan mata sehingga proses penebusan sebenar.
+- Milestone Achievements dan Weekly Missions untuk seorang atau beberapa Anak.
 - Ranking serta laporan daily/weekly/monthly yang Parent-only.
 - Private Child profile, installable PWA, offline fallback, dan static-only cache.
 - cPanel hardening: public-only root, no-store responses, CSRF, CSP, local Bootstrap, token expiry/revocation, dan audit.
 
-Rujuk [architecture](docs/ARCHITECTURE.md), [deployment checklist](docs/CPANEL_DEPLOYMENT.md), dan [security scan](docs/SECURITY_SCAN_PHASE_11.md).
+Rujuk [architecture](docs/ARCHITECTURE.md), [dashboard Anak](docs/CHILD_DASHBOARD.md), [rutin Semua anak](docs/ROUTINE_GROUPS.md), [deployment checklist](docs/CPANEL_DEPLOYMENT.md), dan [security scan](docs/SECURITY_SCAN_PHASE_11.md).
 
 ## Local/development setup
 
@@ -35,7 +38,7 @@ composer validate --strict
 composer audit --locked --no-dev
 ```
 
-Verification selepas production initialization: **120 tests, 554 assertions** lulus, termasuk **41 tests, 192 assertions** untuk seeders. Seeder tests dalam `tests/feature/SeederInitializationTest.php` menggunakan SQLite `:memory:` yang terasing.
+Ujian feature baharu meliputi idempotency points, Reward Goal, Daily Progress, Perfect Day, Achievements, Weekly Missions, update kata laluan Anak, dan penyelarasan rutin Semua anak. Seeder tests dalam `tests/feature/SeederInitializationTest.php` menggunakan SQLite `:memory:` yang terasing. Jalankan suite penuh pada branch deployment dan selesaikan sebarang kegagalan yang dilaporkan sebelum release.
 
 ## Production
 
@@ -48,6 +51,6 @@ php spark migrate
 php spark db:seed ProductionSeeder
 ```
 
-Seeder mencipta satu family dan dua Parent sahaja. Selepas login, buka **Children**, cipta tiga Child melalui UI, kemudian provision peranti masing-masing. Tiada public registration atau data demo dicipta. `DemoSeeder` kini disekat dalam production.
+Seeder mencipta satu family dan dua Parent sahaja. Selepas login, buka **Anak-anak**, cipta akaun Anak melalui UI, kemudian provision peranti masing-masing. Rutin ber-scope **Semua anak** yang sudah wujud disalin secara automatik kepada Anak baharu. Tiada public registration atau data demo dicipta. `DemoSeeder` disekat dalam production.
 
 Rujuk [production initialization](docs/PRODUCTION_INITIALIZATION.md) untuk exact env variables, validation, rerun behaviour, dan tindakan selamat jika data live bercanggah. Seeder tidak reset password atau menukar demo data yang sudah live.

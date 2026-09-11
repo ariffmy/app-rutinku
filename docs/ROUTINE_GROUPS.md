@@ -1,10 +1,14 @@
 # Rutin Semua anak
 
-Rutin baharu melalui Semua anak menyimpan pengecam kumpulan rawak. Nama, hari rutin dan status aktif disimpan serentak untuk semua salinan kumpulan asal, termasuk anak yang kemudian dinyahaktifkan. Anak baharu tidak dimasukkan secara automatik. Rutin individu dan kumpulan lain tidak terjejas walaupun namanya sama.
+Rutin baharu melalui Semua anak menyimpan pengecam kumpulan rawak. Nama, hari rutin dan status aktif disimpan serentak untuk semua salinan kumpulan asal, termasuk anak yang kemudian dinyahaktifkan. Rutin individu dan kumpulan lain tidak terjejas walaupun namanya sama.
+
+Apabila Anak baharu dicipta, `ChildManagementService` memanggil `RoutineService::addChildToAllChildrenRoutines()` dalam transaksi yang sama. Setiap kumpulan keluarga disalin kepada Anak tersebut bersama hari rutin, task, jadual, mata, status approval, dan task-group token. Rutin individu tidak disalin.
+
+Halaman Rutin ibu bapa turut menjalankan reconciliation untuk Anak aktif yang sudah wujud tetapi tiada salinan sesuatu kumpulan. Pemeriksaan boleh diulang tanpa menghasilkan duplicate. Pada MySQL/PostgreSQL, baris group dikunci sebelum semakan dan insert untuk mengelakkan dua request mencipta salinan serentak.
 
 Borang kumpulan memaparkan anak yang terlibat dan butang Simpan untuk semua anak. Anak pemilik tidak boleh ditukar secara individu. Untuk nyahaktif kumpulan, matikan Rutin aktif dan simpan; butang padam satu rutin tidak dipaparkan pada borang kumpulan.
 
-Tugasan, penyelesaian dan mata kekal rekod berasingan bagi setiap anak. Suntingan tugasan bukan sebahagian penyelarasan rutin ini.
+Tugasan, penyelesaian dan mata kekal rekod berasingan bagi setiap anak. Tugasan group baharu dan suntingan task yang berpaut menggunakan `task_group_token`; history completion sedia ada tidak disalin.
 
 ## Rekod lama
 
