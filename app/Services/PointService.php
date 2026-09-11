@@ -339,6 +339,43 @@ class PointService
         }
     }
 
+    public function awardAchievementPoints(int $childUserId, int $childAchievementId): array
+    {
+        $this->assertActiveChild($childUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild($childUserId);
+            $record = (new \App\Models\ChildAchievementModel($this->db))->find($childAchievementId);
+            if ($record === null || (int) $record['child_id'] !== $childUserId || (int) $record['points_awarded'] <= 0) {
+                throw new PointException('Rekod bonus pencapaian tidak sah.');
+            }
+            $transactions = $this->transactions ?? new PointTransactionModel($this->db);
+            $existing = $transactions->where('type', PointTransactionType::BONUS->value)
+                ->where('reference_type', 'achievement')->where('reference_id', $childAchievementId)->first();
+            if ($existing === null) {
+                $id = $transactions->insert([
+                    'child_user_id' => $childUserId,
+                    'type' => PointTransactionType::BONUS->value,
+                    'points' => (int) $record['points_awarded'],
+                    'reference_type' => 'achievement',
+                    'reference_id' => $childAchievementId,
+                    'description' => 'Bonus pencapaian',
+                    'transaction_date' => substr((string) $record['earned_at'], 0, 10),
+                    'created_by_user_id' => null,
+                ], true);
+                if ($id === false) {
+                    throw new PointException('Bonus pencapaian tidak dapat direkodkan.');
+                }
+                $existing = $transactions->find($id);
+            }
+            $this->db->transComplete();
+            return $existing;
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
     public function getBalance(int $childUserId): int
     {
         $this->assertActiveChild($childUserId);

@@ -33,6 +33,7 @@
         <a class="nav-link <?= ($activeNav ?? '') === 'today' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.today') ?>">Hari Ini</a>
         <a class="nav-link <?= ($activeNav ?? '') === 'rewards' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.rewards') ?>">Ganjaran</a>
         <a class="nav-link <?= ($activeNav ?? '') === 'progress' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.progress') ?>">Kemajuan</a>
+        <a class="nav-link <?= ($activeNav ?? '') === 'achievements' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.achievements') ?>">Pencapaian</a>
         <a class="nav-link <?= ($activeNav ?? '') === 'profile' ? 'active fw-semibold' : '' ?>" href="<?= route_to('child.profile') ?>">Profil</a>
     </div>
 </nav>

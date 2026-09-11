@@ -13,6 +13,7 @@ $routes->group('child', ['filter' => 'trusted-child-device'], static function (R
     $routes->get('', 'Child\TodayController::index');
     $routes->get('today', 'Child\TodayController::index', ['as' => 'child.today']);
     $routes->get('progress', 'Child\ProgressController::index', ['as' => 'child.progress']);
+    $routes->get('achievements', 'Child\AchievementController::index', ['as' => 'child.achievements']);
     $routes->get('profile', 'Child\ProfileController::index', ['as' => 'child.profile']);
     $routes->post('profile', 'Child\ProfileController::update', ['as' => 'child.profile.update']);
     $routes->get('images/(:segment)', 'FamilyImageController::childImage/$1', ['as' => 'child.image']);
