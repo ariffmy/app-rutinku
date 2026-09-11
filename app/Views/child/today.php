@@ -27,6 +27,7 @@
                     <div class="card child-task-card border-0 shadow-sm h-100"><div class="card-body">
                         <div class="child-task-details">
                             <h3 class="h6 mb-1" data-task-title><?= esc($task['title']) ?></h3>
+                            <?php if (! empty($task['task_time'])): ?><div class="small text-secondary task-time" data-task-time><?= esc(ui_task_time($task)) ?></div><?php endif ?>
                             <span class="task-stars" role="img" aria-label="<?= esc($task['points']) ?> bintang"><?= ui_icon('star') ?><span class="task-stars-count" aria-hidden="true"><?= esc($task['points']) ?></span></span>
                             <span data-status-label class="badge <?= $completionStatus === 'pending' ? 'text-bg-warning' : ($completionStatus === 'rejected' ? 'text-bg-danger' : 'text-bg-success') ?>" <?= $completionStatus === 'not_completed' ? 'hidden' : '' ?>><?= esc(['pending' => 'Menunggu kelulusan', 'rejected' => 'Ditolak', 'completed' => 'Selesai'][$completionStatus] ?? '') ?></span>
                             <?php if ($completionStatus === 'rejected' && ! empty($task['rejection_reason'])): ?><small class="text-danger"><?= esc($task['rejection_reason']) ?></small><?php endif ?>

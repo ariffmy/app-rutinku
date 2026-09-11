@@ -45,13 +45,14 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
         [$parent, $child] = $this->loginChild();
         $routines = new RoutineService();
         $routine = $routines->create($parent, ['child_user_id' => $child, 'name' => 'Pagi', 'is_active' => 1, 'perfect_day_eligible' => 0], [1,2,3,4,5,6,7]);
-        $task = $routines->createTask($parent, $routine, ['title' => 'Mandi', 'points' => 10, 'is_required' => 1, 'is_active' => 1]);
+        $task = $routines->createTask($parent, $routine, ['title' => 'Mandi', 'task_time' => '07:15', 'points' => 10, 'is_required' => 1, 'is_active' => 1]);
         $page = $this->get('/child/today');
         $page->assertOK();
         $page->assertSee('Mandi');
         $this->assertStringContainsString('child-task-card', $page->response()->getBody());
         $this->assertStringContainsString('class="task-stars" role="img" aria-label="10 bintang"', $page->response()->getBody());
         $this->assertStringContainsString('class="task-stars-count" aria-hidden="true">10</span>', $page->response()->getBody());
+        $this->assertStringContainsString('7:15 pagi – 7:30 pagi', $page->response()->getBody());
         $this->assertStringNotContainsString('Bila-bila masa', $page->response()->getBody());
         $this->assertStringNotContainsString('Bila-bila masa · 15 minit', $page->response()->getBody());
         $this->assertStringNotContainsString('data-duration=', $page->response()->getBody());
