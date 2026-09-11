@@ -53,6 +53,7 @@ class TaskController extends BaseController
             return $this->response->setJSON(['id' => $taskId, 'status' => $status, 'completed' => $status === 'completed', 'message' => $message,
                 'balance' => (new \App\Services\PointService())->getBalance((int) Services::trustedChildContext()->child()->id),
                 'daily_progress' => (new \App\Services\DailyProgressService())->forChild((int) Services::trustedChildContext()->child()->id, Time::now(app_timezone())),
+                'perfect_day' => (new \App\Services\PerfectDayService())->successForDay((int) Services::trustedChildContext()->child()->id, Time::now(app_timezone())),
                 'csrf' => csrf_hash()]);
         }
         return redirect()->to(route_to('child.today'))->with('success', $message);

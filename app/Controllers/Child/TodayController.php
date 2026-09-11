@@ -24,6 +24,7 @@ class TodayController extends BaseController
             'family' => $context->family(),
             'schedule' => $schedule,
             'dailyProgress' => (new \App\Services\DailyProgressService())->fromSchedule($schedule),
+            'perfectDay' => (new \App\Services\PerfectDayService())->successForDay((int) $context->child()->id, Time::now(app_timezone())),
             'balance' => (new PointService())->getBalance((int) $context->child()->id),
             'rewardGoal' => (new \App\Services\RewardService())->activeGoal((int) $context->child()->id),
             'profile' => (new \App\Models\ChildProfileModel())->where('user_id', (int) $context->child()->id)->first(),

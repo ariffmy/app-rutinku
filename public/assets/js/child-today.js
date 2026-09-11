@@ -61,6 +61,11 @@
       form.closest('[data-task]').dataset.completed = data.completed ? '1' : '0';
       form.closest('[data-task]').dataset.status = data.status || (data.completed ? 'completed' : 'not_completed');
       document.querySelector('[data-balance]').textContent = data.balance;
+      const perfectDay = document.querySelector('[data-perfect-day]');
+      if (perfectDay) {
+        perfectDay.hidden = !data.perfect_day;
+        perfectDay.querySelector('[data-perfect-day-bonus]').textContent = data.perfect_day?.bonus_points ?? 0;
+      }
       const daily = document.querySelector('[data-daily-progress]');
       if (daily && data.daily_progress) {
         daily.querySelector('[data-daily-completed]').textContent = data.daily_progress.completed_count;

@@ -44,7 +44,7 @@ final class ChildDashboardUpdatesTest extends CIUnitTestCase
     {
         [$parent, $child] = $this->loginChild();
         $routines = new RoutineService();
-        $routine = $routines->create($parent, ['child_user_id' => $child, 'name' => 'Pagi', 'is_active' => 1], [1,2,3,4,5,6,7]);
+        $routine = $routines->create($parent, ['child_user_id' => $child, 'name' => 'Pagi', 'is_active' => 1, 'perfect_day_eligible' => 0], [1,2,3,4,5,6,7]);
         $task = $routines->createTask($parent, $routine, ['title' => 'Mandi', 'points' => 10, 'is_required' => 1, 'is_active' => 1]);
         $page = $this->get('/child/today');
         $page->assertOK();

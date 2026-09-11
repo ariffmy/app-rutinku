@@ -403,6 +403,7 @@ final class PhaseSixToEightTest extends CIUnitTestCase
             'start_time' => '07:00',
             'sort_order' => 0,
             'is_active' => 1,
+            'perfect_day_eligible' => 0,
         ], $days);
     }
 

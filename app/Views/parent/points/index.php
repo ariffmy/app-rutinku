@@ -39,6 +39,7 @@
             <form action="<?= route_to('parent.points.adjust') ?>" method="post" class="card border-0 shadow-sm">
                 <?= csrf_field() ?>
                 <input type="hidden" name="child_user_id" value="<?= esc($selectedChildId) ?>">
+                <input type="hidden" name="request_id" value="<?= esc(old('request_id') ?? random_int(1, PHP_INT_MAX)) ?>">
                 <div class="card-body p-4">
                     <h2 class="h4 mb-3">Pelarasan manual</h2>
                     <div class="mb-3">

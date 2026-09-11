@@ -75,6 +75,7 @@ class TaskCompletionService
                     $childUserId,
                     (int) $completionId,
                 );
+                (new PerfectDayService($this->db))->awardIfQualified($childUserId, $local);
             }
 
             $this->db->transComplete();
@@ -240,7 +241,6 @@ class TaskCompletionService
                 throw new AuthorizationException('Ibu bapa tidak boleh meluluskan penyelesaian ini.');
             }
 
-            ($this->points ?? new PointService(db: $this->db))->awardTaskPoints((int) $completion['child_user_id'], $completionId);
             if (! ($this->completions ?? new TaskCompletionModel())->update($completionId, [
                 'status' => 'completed',
                 'rejection_reason' => null,
@@ -249,6 +249,11 @@ class TaskCompletionService
             ])) {
                 throw new TaskCompletionException('Kelulusan tidak dapat disimpan.');
             }
+            ($this->points ?? new PointService(db: $this->db))->awardTaskPoints((int) $completion['child_user_id'], $completionId);
+            (new PerfectDayService($this->db))->awardIfQualified(
+                (int) $completion['child_user_id'],
+                new DateTimeImmutable((string) $completion['completion_date'], new DateTimeZone(app_timezone())),
+            );
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
                 'task.completion_approved', $parentUserId, (int) $completion['child_user_id'],
                 'task_completion', $completionId, 'Ibu bapa meluluskan penyelesaian tugasan.',
@@ -343,14 +348,16 @@ class TaskCompletionService
     private function lockChild(int $childUserId): void
     {
         if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
-            $this->db->query('SELECT id FROM users WHERE id = ? FOR UPDATE', [$childUserId]);
+            $table = $this->db->protectIdentifiers($this->db->prefixTable('users'));
+            $this->db->query("SELECT id FROM {$table} WHERE id = ? FOR UPDATE", [$childUserId]);
         }
     }
 
     private function lockCompletion(int $completionId): void
     {
         if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
-            $this->db->query('SELECT id FROM task_completions WHERE id = ? FOR UPDATE', [$completionId]);
+            $table = $this->db->protectIdentifiers($this->db->prefixTable('task_completions'));
+            $this->db->query("SELECT id FROM {$table} WHERE id = ? FOR UPDATE", [$completionId]);
         }
     }
 

@@ -50,6 +50,7 @@ class PointController extends BaseController
             'child_user_id' => 'required|is_natural_no_zero',
             'points' => 'required|regex_match[/^-?[1-9]\d*$/]',
             'reason' => 'required|max_length[500]',
+            'request_id' => 'permit_empty|is_natural_no_zero',
         ])) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -64,6 +65,9 @@ class PointController extends BaseController
                 (int) $this->request->getPost('points'),
                 (string) $this->request->getPost('reason'),
                 Time::now(app_timezone()),
+                $this->request->getPost('request_id') === null || $this->request->getPost('request_id') === ''
+                    ? null
+                    : (int) $this->request->getPost('request_id'),
             );
         } catch (AuthorizationException) {
             throw PageNotFoundException::forPageNotFound();

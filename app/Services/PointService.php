@@ -41,7 +41,8 @@ class PointService
     {
         $this->assertActiveChild($childUserId);
         $completion = ($this->completions ?? new TaskCompletionModel())->find($completionId);
-        if ($completion === null || (int) $completion['child_user_id'] !== $childUserId) {
+        if ($completion === null || (int) $completion['child_user_id'] !== $childUserId
+            || ($completion['status'] ?? 'completed') !== 'completed') {
             throw new PointException('Penyelesaian tidak sah untuk pemberian mata.');
         }
 
@@ -158,6 +159,7 @@ class PointService
         int $points,
         string $reason,
         DateTimeInterface $at,
+        ?int $requestId = null,
     ): array {
         if (! ($this->authorization ?? new FamilyAuthorizationService())
             ->parentCanManageChild($parentUserId, $childUserId)) {
@@ -173,16 +175,32 @@ class PointService
         }
 
         $local = $this->localTime($at);
+        $requestId ??= random_int(1, PHP_INT_MAX);
         $this->db->transException(true)->transStart();
         try {
             $this->lockChild($childUserId);
+            $existing = ($this->transactions ?? new PointTransactionModel())
+                ->where('type', PointTransactionType::ADJUSTMENT->value)
+                ->where('reference_type', 'manual_adjustment')
+                ->where('reference_id', $requestId)
+                ->first();
+            if ($existing !== null) {
+                if ((int) $existing['child_user_id'] !== $childUserId
+                    || (int) $existing['points'] !== $points
+                    || (string) $existing['description'] !== $reason
+                    || (int) $existing['created_by_user_id'] !== $parentUserId) {
+                    throw new PointException('Kunci permintaan pelarasan telah digunakan untuk data lain.');
+                }
+                $this->db->transComplete();
+                return $existing;
+            }
             $oldBalance = $this->getBalance($childUserId);
             $transactionId = ($this->transactions ?? new PointTransactionModel())->insert([
                 'child_user_id' => $childUserId,
                 'type' => PointTransactionType::ADJUSTMENT->value,
                 'points' => $points,
-                'reference_type' => null,
-                'reference_id' => null,
+                'reference_type' => 'manual_adjustment',
+                'reference_id' => $requestId,
                 'description' => $reason,
                 'transaction_date' => $local->format('Y-m-d'),
                 'created_by_user_id' => $parentUserId,
@@ -204,6 +222,20 @@ class PointService
             $this->db->transComplete();
         } catch (Throwable $exception) {
             $this->db->transRollback();
+            if ($this->isDuplicateError($exception)) {
+                $existing = ($this->transactions ?? new PointTransactionModel())
+                    ->where('type', PointTransactionType::ADJUSTMENT->value)
+                    ->where('reference_type', 'manual_adjustment')
+                    ->where('reference_id', $requestId)
+                    ->first();
+                if ($existing !== null
+                    && (int) $existing['child_user_id'] === $childUserId
+                    && (int) $existing['points'] === $points
+                    && (string) $existing['description'] === $reason
+                    && (int) $existing['created_by_user_id'] === $parentUserId) {
+                    return $existing;
+                }
+            }
             throw $exception;
         }
 
@@ -230,6 +262,10 @@ class PointService
             ->first();
         if ($existing !== null) {
             return $existing;
+        }
+        if (($redemption['status'] ?? null) !== \App\Enums\RewardRedemptionStatus::PENDING->value
+            || (int) $redemption['points_used'] <= 0) {
+            throw new PointException('Penebusan belum layak untuk potongan mata.');
         }
 
         $reward = ($this->rewards ?? new RewardModel())->find((int) $redemption['reward_id']);
@@ -264,6 +300,43 @@ class PointService
         }
 
         return ($this->transactions ?? new PointTransactionModel())->find((int) $transactionId);
+    }
+
+    public function awardPerfectDayPoints(int $childUserId, int $perfectDayId): array
+    {
+        $this->assertActiveChild($childUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild($childUserId);
+            $record = (new \App\Models\PerfectDayModel($this->db))->find($perfectDayId);
+            if ($record === null || (int) $record['child_id'] !== $childUserId) {
+                throw new PointException('Rekod Perfect Day tidak sah.');
+            }
+            $transactions = $this->transactions ?? new PointTransactionModel($this->db);
+            $existing = $transactions->where('type', PointTransactionType::BONUS->value)
+                ->where('reference_type', 'perfect_day')->where('reference_id', $perfectDayId)->first();
+            if ($existing === null) {
+                $id = $transactions->insert([
+                    'child_user_id' => $childUserId,
+                    'type' => PointTransactionType::BONUS->value,
+                    'points' => (int) $record['bonus_points'],
+                    'reference_type' => 'perfect_day',
+                    'reference_id' => $perfectDayId,
+                    'description' => 'Bonus Perfect Day!',
+                    'transaction_date' => $record['perfect_date'],
+                    'created_by_user_id' => null,
+                ], true);
+                if ($id === false) {
+                    throw new PointException('Bonus Perfect Day tidak dapat direkodkan.');
+                }
+                $existing = $transactions->find($id);
+            }
+            $this->db->transComplete();
+            return $existing;
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
     }
 
     public function getBalance(int $childUserId): int
@@ -347,7 +420,8 @@ class PointService
     private function lockChild(int $childUserId): void
     {
         if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
-            $this->db->query('SELECT id FROM users WHERE id = ? FOR UPDATE', [$childUserId]);
+            $table = $this->db->protectIdentifiers($this->db->prefixTable('users'));
+            $this->db->query("SELECT id FROM {$table} WHERE id = ? FOR UPDATE", [$childUserId]);
         }
     }
 

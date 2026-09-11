@@ -265,7 +265,7 @@ final class PointPhaseFiveTest extends CIUnitTestCase
                 $this->assertSame($expected, $points->getEarnedPointsBetween($childId, $now, $now));
                 $page = $this->get('/child/today');
                 $page->assertOK();
-                $page->assertSee($expected . ' mata');
+                $this->assertStringContainsString('data-balance>' . $expected . '</span> mata', $page->response()->getBody());
             }
         }
     }
@@ -339,6 +339,7 @@ final class PointPhaseFiveTest extends CIUnitTestCase
             'start_time' => '07:00',
             'sort_order' => 0,
             'is_active' => 1,
+            'perfect_day_eligible' => 0,
         ], [1]);
         $taskId = $routines->createTask($parentId, $routineId, [
             'title' => 'Phase 5 Task',
