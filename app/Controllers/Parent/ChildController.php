@@ -85,15 +85,16 @@ class ChildController extends BaseController
     {
         $rules = [
             'name' => 'required|max_length[120]',
-            'email' => 'required|valid_email|max_length[190]',
             'date_of_birth' => 'permit_empty|valid_date[Y-m-d]',
             'is_ranking_eligible' => 'required|in_list[0,1]',
         ];
         if ($updating) {
+            $rules['email'] = 'permit_empty|valid_email|max_length[190]';
             $rules['is_active'] = 'required|in_list[0,1]';
             $rules['password'] = 'permit_empty|min_length[8]|max_length[72]';
-            $rules['password_confirm'] = 'matches[password]';
+            $rules['password_confirm'] = 'permit_empty|matches[password]';
         } else {
+            $rules['email'] = 'required|valid_email|max_length[190]';
             $rules['password'] = 'required|min_length[8]|max_length[72]';
             $rules['password_confirm'] = 'required|matches[password]';
         }

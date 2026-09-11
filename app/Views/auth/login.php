@@ -40,7 +40,10 @@
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Kata laluan</label>
-                    <input id="password" name="password" type="password" class="form-control form-control-lg" autocomplete="current-password" required>
+                    <div class="input-group input-group-lg">
+                        <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" required>
+                        <button type="button" class="btn btn-outline-secondary" data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Tunjukkan kata laluan"><i class="fa-solid fa-eye" data-password-toggle-icon aria-hidden="true"></i><span class="visually-hidden" data-password-toggle-label>Tunjukkan kata laluan</span></button>
+                    </div>
                 </div>
                 <div class="form-check mb-4">
                     <input id="remember_me" name="remember_me" value="1" type="checkbox" class="form-check-input" <?= old('remember_me') === '1' ? 'checked' : '' ?>>
@@ -51,5 +54,6 @@
             <p class="small text-secondary text-center mb-0 mt-4">Akaun akan dibawa ke dashboard mengikut peranan masing-masing.</p>
     </section>
 </main>
+<script defer src="<?= ui_asset_url('assets/js/password-toggle.js') ?>"></script>
 </body>
 </html>

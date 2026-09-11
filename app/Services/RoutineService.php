@@ -33,6 +33,14 @@ class RoutineService
             return [];
         }
 
+        // Reconcile groups created before a child was added (or before this
+        // synchronization existed) whenever the parent opens the routine list.
+        foreach (($this->families ?? new FamilyService())->children((int) $family['id']) as $child) {
+            if ($child['is_active']) {
+                $this->addChildToAllChildrenRoutines($parentUserId, (int) $child['id']);
+            }
+        }
+
         $model = $this->routines ?? new RoutineModel();
         $model->select('routines.*, users.name AS child_name')
             ->join('users', 'users.id = routines.child_user_id')
@@ -139,6 +147,75 @@ class RoutineService
         }
 
         return $this->insertRoutines($payloads, $this->normalizeDays($days));
+    }
+
+    /** Add a newly created child to every existing "Semua anak" routine group. */
+    public function addChildToAllChildrenRoutines(int $parentUserId, int $childUserId): array
+    {
+        if (! ($this->authorization ?? new FamilyAuthorizationService())->parentCanManageChild($parentUserId, $childUserId)) {
+            throw new AuthorizationException('Ibu bapa tidak boleh menyelaraskan rutin untuk anak ini.');
+        }
+        $family = ($this->families ?? new FamilyService())->currentFamilyForUser($parentUserId);
+        if ($family === null) {
+            throw new AuthorizationException('Keluarga tidak ditemui.');
+        }
+
+        $groups = $this->db->table('routines routine')
+            ->select('routine.group_token, MIN(routine.id) AS source_id', false)
+            ->join('family_users membership', 'membership.user_id = routine.child_user_id')
+            ->where('membership.family_id', (int) $family['id'])
+            ->where('routine.assignment_scope', 'all')
+            ->where('routine.group_token !=', null)
+            ->groupBy('routine.group_token')
+            ->orderBy('source_id', 'ASC')
+            ->get()->getResultArray();
+        if ($groups === []) {
+            return [];
+        }
+
+        $routines = $this->routines ?? new RoutineModel();
+        $tasks = $this->routineTasks ?? new RoutineTaskModel();
+        $created = [];
+        $this->db->transException(true)->transStart();
+        try {
+            foreach ($groups as $group) {
+                $token = (string) $group['group_token'];
+                if (in_array($this->db->DBDriver, ['MySQLi', 'Postgre'], true)) {
+                    $this->db->query('SELECT id FROM routines WHERE group_token = ? ORDER BY id FOR UPDATE', [$token]);
+                }
+                if ($routines->where('group_token', $token)->where('child_user_id', $childUserId)->first() !== null) {
+                    continue;
+                }
+                $source = $routines->find((int) $group['source_id']);
+                if ($source === null) {
+                    throw new InvalidArgumentException('Sumber rutin Semua anak tidak ditemui.');
+                }
+                $routineId = $routines->insert($this->routinePayload($source, $childUserId) + [
+                    'group_token' => $token,
+                    'assignment_scope' => 'all',
+                ], true);
+                if ($routineId === false) {
+                    throw new InvalidArgumentException(implode(' ', $routines->errors()));
+                }
+                $this->replaceDays((int) $routineId, $this->daysForRoutine((int) $source['id']));
+
+                foreach ($tasks->where('routine_id', (int) $source['id'])->orderBy('id', 'ASC')->findAll() as $task) {
+                    $taskId = $tasks->insert($this->taskPayload($task, (int) $routineId) + [
+                        'task_group_token' => $task['task_group_token'] ?: null,
+                    ], true);
+                    if ($taskId === false) {
+                        throw new InvalidArgumentException(implode(' ', $tasks->errors()));
+                    }
+                }
+                $created[] = (int) $routineId;
+            }
+            $this->db->transComplete();
+        } catch (\Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+
+        return $created;
     }
 
     public function update(int $parentUserId, int $routineId, array $data, array $days): void

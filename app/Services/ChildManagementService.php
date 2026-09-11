@@ -91,6 +91,13 @@ class ChildManagementService
                 throw new \RuntimeException('Profil Anak tidak dapat dicipta: ' . implode(' ', $profiles->errors()));
             }
 
+            // "Semua anak" groups are stored as one independent routine per child.
+            // Extend every existing family group while the child creation transaction is open.
+            (new RoutineService(db: $this->db))->addChildToAllChildrenRoutines(
+                $parentUserId,
+                (int) $childId,
+            );
+
             ($this->auditLogs ?? new AuditLogService())->record(
                 'child.created',
                 $parentUserId,
@@ -133,7 +140,13 @@ class ChildManagementService
             if ($password !== null) {
                 $userChanges['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
             }
-            if (! $users->update($childUserId, $userChanges)) {
+            $duplicateEmail = $users->where('email', $email)->where('id !=', $childUserId)->first();
+            if ($duplicateEmail !== null) {
+                throw new \RuntimeException('Akaun Anak tidak dapat dikemas kini: E-mel sudah digunakan.');
+            }
+            // The service validates every changed field and checks email ownership above.
+            // Skip the model's create-oriented is_unique placeholder during an update.
+            if (! $users->skipValidation(true)->update($childUserId, $userChanges)) {
                 throw new \RuntimeException('Akaun Anak tidak dapat dikemas kini: ' . implode(' ', $users->errors()));
             }
 
