@@ -70,7 +70,7 @@ final class ParentNavigationTest extends CIUnitTestCase
         $this->assertSame(1, $xpath->query('//nav[@aria-label="Navigasi Ibu bapa"]')->length);
         $this->assertSame(1, $xpath->query('//button[@data-parent-menu-toggle][@aria-controls="parent-nav-panel"][@aria-expanded="false"][@hidden]')->length);
         $this->assertSame(1, $xpath->query('//div[@id="parent-nav-panel"][not(@hidden)]')->length, 'Without JavaScript the links must remain usable.');
-        $this->assertSame(7, $xpath->query('//ul[@class="parent-nav-links"]/li/a')->length);
+        $this->assertSame(8, $xpath->query('//ul[@class="parent-nav-links"]/li/a')->length);
         $activeLinks = $xpath->query('//nav//a[@aria-current="page"]');
         $this->assertSame(1, $activeLinks->length);
         $this->assertSame($activeLabel, $activeLinks->item(0)->textContent);
@@ -91,6 +91,7 @@ final class ParentNavigationTest extends CIUnitTestCase
             ['/rewards', 'Ganjaran'],
             ['/ranking', 'Kedudukan'],
             ['/reports', 'Laporan'],
+            ['/missions', 'Misi'],
         ];
     }
 

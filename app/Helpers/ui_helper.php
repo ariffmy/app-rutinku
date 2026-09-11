@@ -21,7 +21,7 @@ function ui_transaction_badge(array $transaction): string
 
 function ui_icon(string $name, string $label = ''): string
 {
-    $icons = ['star', 'fire', 'gift', 'lightbulb', 'clock', 'check', 'arrow-left', 'bars', 'lock', 'user', 'cat', 'robot', 'rocket', 'sun', 'utensils', 'tv', 'person-running', 'crown', 'gamepad', 'money-bill-wave', 'wand-magic-sparkles', 'ellipsis'];
+    $icons = ['star', 'fire', 'gift', 'lightbulb', 'clock', 'check', 'book', 'arrow-left', 'bars', 'lock', 'user', 'cat', 'robot', 'rocket', 'sun', 'utensils', 'tv', 'person-running', 'crown', 'gamepad', 'money-bill-wave', 'wand-magic-sparkles', 'ellipsis'];
     if (! in_array($name, $icons, true)) {
         return '';
     }

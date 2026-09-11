@@ -376,6 +376,48 @@ class PointService
         }
     }
 
+    public function awardWeeklyMissionPoints(int $childUserId, int $childMissionId): array
+    {
+        $this->assertActiveChild($childUserId);
+        $this->db->transException(true)->transStart();
+        try {
+            $this->lockChild($childUserId);
+            $record = $this->db->table('child_weekly_missions assignment')
+                ->select('assignment.id, assignment.child_id, assignment.status, assignment.completed_at, mission.title, mission.bonus_points')
+                ->join('weekly_missions mission', 'mission.id = assignment.mission_id')
+                ->where('assignment.id', $childMissionId)->get()->getRowArray();
+            if ($record === null || (int) $record['child_id'] !== $childUserId
+                || $record['status'] !== 'completed' || (int) $record['bonus_points'] <= 0) {
+                throw new PointException('Rekod bonus misi mingguan tidak sah.');
+            }
+
+            $transactions = $this->transactions ?? new PointTransactionModel($this->db);
+            $existing = $transactions->where('type', PointTransactionType::BONUS->value)
+                ->where('reference_type', 'weekly_mission')->where('reference_id', $childMissionId)->first();
+            if ($existing === null) {
+                $id = $transactions->insert([
+                    'child_user_id' => $childUserId,
+                    'type' => PointTransactionType::BONUS->value,
+                    'points' => (int) $record['bonus_points'],
+                    'reference_type' => 'weekly_mission',
+                    'reference_id' => $childMissionId,
+                    'description' => mb_substr('Bonus misi: ' . $record['title'], 0, 500),
+                    'transaction_date' => substr((string) $record['completed_at'], 0, 10),
+                    'created_by_user_id' => null,
+                ], true);
+                if ($id === false) {
+                    throw new PointException('Bonus misi mingguan tidak dapat direkodkan.');
+                }
+                $existing = $transactions->find($id);
+            }
+            $this->db->transComplete();
+            return $existing;
+        } catch (Throwable $exception) {
+            $this->db->transRollback();
+            throw $exception;
+        }
+    }
+
     public function getBalance(int $childUserId): int
     {
         $this->assertActiveChild($childUserId);

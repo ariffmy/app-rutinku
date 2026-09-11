@@ -27,6 +27,7 @@ $navigation = [
     ['Ganjaran', 'parent.rewards', url_is('rewards*') || url_is('reward-redemptions*')],
     ['Kedudukan', 'parent.ranking', url_is('ranking*')],
     ['Laporan', 'parent.reports', url_is('reports*')],
+    ['Misi', 'parent.missions', url_is('missions*')],
 ];
 ?>
 <nav class="parent-nav bg-white border-bottom sticky-top" aria-label="Navigasi Ibu bapa" data-parent-nav>

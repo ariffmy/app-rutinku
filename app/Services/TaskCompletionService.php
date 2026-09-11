@@ -77,6 +77,7 @@ class TaskCompletionService
                 );
                 (new PerfectDayService($this->db))->awardIfQualified($childUserId, $local);
                 (new AchievementService($this->db))->checkAll($childUserId, $local);
+                (new MissionService($this->db))->checkForChild($childUserId, $local);
             }
 
             $this->db->transComplete();
@@ -256,6 +257,7 @@ class TaskCompletionService
                 new DateTimeImmutable((string) $completion['completion_date'], new DateTimeZone(app_timezone())),
             );
             (new AchievementService($this->db))->checkAll((int) $completion['child_user_id'], $local);
+            (new MissionService($this->db))->checkForChild((int) $completion['child_user_id'], $local);
             ($this->auditLogs ?? new AuditLogService(new AuditLogModel()))->record(
                 'task.completion_approved', $parentUserId, (int) $completion['child_user_id'],
                 'task_completion', $completionId, 'Ibu bapa meluluskan penyelesaian tugasan.',
