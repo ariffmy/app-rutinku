@@ -60,12 +60,14 @@ final class UiLanguageTest extends CIUnitTestCase
     public function testRewardFormUsesControlledMetadataAndImagePreview(): void
     {
         $view = file_get_contents(APPPATH . 'Views/parent/rewards/form.php');
+        $csp = new \Config\ContentSecurityPolicy();
         $this->assertStringContainsString('<select id="category"', $view);
         $this->assertStringNotContainsString('<datalist', $view);
         $this->assertStringContainsString('<textarea id="description"', $view);
         $this->assertStringContainsString('<select id="redemption_limit"', $view);
         $this->assertStringContainsString('data-reward-image-preview', $view);
         $this->assertFileExists(FCPATH . 'assets/js/reward-form.js');
+        $this->assertContains('blob:', $csp->imageSrc);
     }
 
     public function testMalaysianDatesAndTimes(): void
