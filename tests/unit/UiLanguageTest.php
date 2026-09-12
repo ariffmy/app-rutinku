@@ -70,6 +70,13 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertContains('blob:', $csp->imageSrc);
     }
 
+    public function testRewardCatalogueStatusBadgeDoesNotStretchWithLongTitles(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/parent/rewards/index.php');
+
+        $this->assertStringContainsString('badge align-self-start flex-shrink-0', $view);
+    }
+
     public function testMalaysianDatesAndTimes(): void
     {
         $this->assertSame('04/09/2026', ui_date('2026-09-04'));

@@ -52,7 +52,7 @@
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex justify-content-between gap-2 mb-2">
                             <h3 class="h5 mb-0"><?= esc($reward['title']) ?></h3>
-                            <span class="badge <?= $reward['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $reward['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
+                            <span class="badge align-self-start flex-shrink-0 <?= $reward['is_active'] ? 'text-bg-success' : 'text-bg-secondary' ?>"><?= $reward['is_active'] ? 'Aktif' : 'Tidak aktif' ?></span>
                         </div>
                         <p><span class="badge text-bg-light border"><?= esc($reward['category'] ?? 'Lain-lain') ?></span></p>
                         <?php if (! empty($reward['description'])): ?><p class="text-secondary reward-description"><?= esc($reward['description']) ?></p><?php endif ?>
