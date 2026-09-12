@@ -46,10 +46,20 @@ final class UiLanguageTest extends CIUnitTestCase
         $view = file_get_contents(APPPATH . 'Views/child/achievements.php');
         $css = file_get_contents(FCPATH . 'assets/css/app.css');
 
-        $this->assertStringContainsString('card achievement-card', $view);
+        $this->assertStringContainsString('card child-compact-card achievement-card', $view);
         $this->assertStringContainsString('achievement-icon', $view);
         $this->assertStringContainsString('class="h6 mb-0"', $view);
-        $this->assertStringContainsString('.card.achievement-card > .card-body', $css);
+        $this->assertStringContainsString('.card.child-compact-card > .card-body', $css);
+    }
+
+    public function testChildProgressCardsShareTheCompactAchievementLayout(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/child/progress.php');
+
+        $this->assertGreaterThanOrEqual(5, substr_count($view, 'child-compact-card'));
+        $this->assertStringContainsString('class="row g-2"', $view);
+        $this->assertStringNotContainsString('display-5', $view);
+        $this->assertStringNotContainsString('card-body p-4', $view);
     }
 
     public function testCardsUseOneSharedPaddingValue(): void

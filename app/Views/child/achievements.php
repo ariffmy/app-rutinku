@@ -10,7 +10,7 @@
 <div class="row g-2">
     <?php foreach ($achievements as $achievement): ?>
         <div class="col-12 col-sm-6">
-            <article class="card achievement-card border-0 shadow-sm h-100 <?= $achievement['is_unlocked'] ? '' : 'opacity-75' ?>">
+            <article class="card child-compact-card achievement-card border-0 shadow-sm h-100 <?= $achievement['is_unlocked'] ? '' : 'opacity-75' ?>">
                 <div class="card-body d-flex gap-2">
                     <div class="achievement-icon text-primary" aria-hidden="true"><?= ui_icon($achievement['icon']) ?></div>
                     <div class="flex-grow-1 min-w-0">
