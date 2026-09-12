@@ -63,6 +63,18 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringNotContainsString('card-body p-4', $view);
     }
 
+    public function testChildRewardCardsShareTheCompactAchievementLayout(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/child/rewards.php');
+        $css = file_get_contents(FCPATH . 'assets/css/app.css');
+
+        $this->assertStringContainsString('card child-compact-card child-reward-card reward-card', $view);
+        $this->assertStringContainsString('class="row g-2"', $view);
+        $this->assertStringNotContainsString('card-body p-4', $view);
+        $this->assertStringContainsString('.child-reward-card .reward-card-image', $css);
+        $this->assertStringContainsString('.child-reward-card .btn', $css);
+    }
+
     public function testCardsUseOneSharedPaddingValue(): void
     {
         $css = file_get_contents(FCPATH . 'assets/css/app.css');
