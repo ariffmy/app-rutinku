@@ -91,6 +91,17 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringContainsString('badge align-self-start flex-shrink-0', $view);
     }
 
+    public function testParentAndChildRewardCardsShowTheCompleteImage(): void
+    {
+        $parentView = file_get_contents(APPPATH . 'Views/parent/rewards/index.php');
+        $childView = file_get_contents(APPPATH . 'Views/child/rewards.php');
+        $css = file_get_contents(FCPATH . 'assets/css/app.css');
+
+        $this->assertStringContainsString('class="reward-card-image"', $parentView);
+        $this->assertStringContainsString('class="reward-card-image"', $childView);
+        $this->assertStringContainsString('.reward-card-image { display: block; object-fit: contain;', $css);
+    }
+
     public function testMalaysianDatesAndTimes(): void
     {
         $this->assertSame('04/09/2026', ui_date('2026-09-04'));
