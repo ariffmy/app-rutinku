@@ -9,7 +9,7 @@
 <?php else: ?>
     <div class="row g-2">
         <?php foreach ($catalogue['rewards'] as $reward): ?>
-            <div class="col-12 col-sm-6"><article class="card child-compact-card child-reward-card reward-card border-0 shadow-sm h-100">
+            <div class="col-6"><article class="card child-compact-card child-reward-card reward-card border-0 shadow-sm h-100">
                 <?php if ($url = ui_image_url($reward['image'] ?? null, true)): ?><img src="<?= esc($url) ?>" alt="<?= esc($reward['title']) ?>" class="reward-card-image" loading="lazy"><?php else: ?><div class="reward-placeholder" aria-label="Tiada gambar rujukan"><?= ui_reward_category_icon($reward['category'] ?? null) ?></div><?php endif ?>
                 <div class="card-body d-flex flex-column">
                 <h2 class="h6 mb-1"><?= esc($reward['title']) ?></h2>

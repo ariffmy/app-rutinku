@@ -76,7 +76,14 @@
 .child-compact-card .child-compact-list-item { padding: .7rem .8rem; }
 .child-reward-card .reward-card-image,
 .child-reward-card .reward-placeholder { height: 140px; }
+.child-reward-card .card-body { min-width: 0; overflow-wrap: anywhere; }
+.child-reward-card .badge { max-width: 100%; white-space: normal; }
 .child-reward-card .btn { --bs-btn-padding-x: .75rem; --bs-btn-padding-y: .4rem; --bs-btn-font-size: .875rem; min-height: 42px; }
+@media (max-width: 575.98px) {
+    .child-reward-card .reward-card-image,
+    .child-reward-card .reward-placeholder { height: 110px; }
+    .child-reward-card .btn { --bs-btn-padding-x: .4rem; --bs-btn-font-size: .78rem; width: 100%; }
+}
 .child-profile-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: .35rem .75rem; margin: 0; font-size: .875rem; }
 .child-profile-details dt,
 .child-profile-details dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }

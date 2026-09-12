@@ -70,6 +70,8 @@ final class UiLanguageTest extends CIUnitTestCase
 
         $this->assertStringContainsString('card child-compact-card child-reward-card reward-card', $view);
         $this->assertStringContainsString('class="row g-2"', $view);
+        $this->assertStringContainsString('<div class="col-6">', $view);
+        $this->assertStringNotContainsString('col-12 col-sm-6', $view);
         $this->assertStringNotContainsString('card-body p-4', $view);
         $this->assertStringContainsString('.child-reward-card .reward-card-image', $css);
         $this->assertStringContainsString('.child-reward-card .btn', $css);
