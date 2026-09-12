@@ -27,6 +27,20 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringContainsString('task.hidden = false', $script);
     }
 
+    public function testChildDashboardUsesClockIconAndCompactSummaryCards(): void
+    {
+        $today = file_get_contents(APPPATH . 'Views/child/today.php');
+        $dailyProgress = file_get_contents(APPPATH . 'Views/child/partials/daily_progress.php');
+        $rewardGoal = file_get_contents(APPPATH . 'Views/child/partials/reward_goal.php');
+        $css = file_get_contents(FCPATH . 'assets/css/app.css');
+
+        $this->assertStringContainsString("ui_icon('clock', 'Waktu:')", $today);
+        $this->assertStringContainsString('child-summary-card', $dailyProgress);
+        $this->assertStringContainsString('child-summary-card', $rewardGoal);
+        $this->assertStringContainsString('.card.child-summary-card > .card-body', $css);
+        $this->assertStringContainsString('.child-summary-progress', $css);
+    }
+
     public function testCardsUseOneSharedPaddingValue(): void
     {
         $css = file_get_contents(FCPATH . 'assets/css/app.css');
