@@ -58,6 +58,7 @@ final class UiLanguageTest extends CIUnitTestCase
 
         $this->assertGreaterThanOrEqual(5, substr_count($view, 'child-compact-card'));
         $this->assertStringContainsString('class="row g-2"', $view);
+        $this->assertStringContainsString('child-compact-list-item', $view);
         $this->assertStringNotContainsString('display-5', $view);
         $this->assertStringNotContainsString('card-body p-4', $view);
     }

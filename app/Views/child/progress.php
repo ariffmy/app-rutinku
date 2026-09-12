@@ -51,7 +51,7 @@
         <div class="card child-compact-card border-0 shadow-sm overflow-hidden">
             <div class="list-group list-group-flush">
                 <?php foreach ($pointHistory as $transaction): ?>
-                    <div class="list-group-item d-flex justify-content-between align-items-start gap-2 p-2">
+                    <div class="list-group-item child-compact-list-item d-flex justify-content-between align-items-start gap-2">
                         <div>
                             <div class="fw-semibold"><?= esc(ui_point_description($transaction)) ?></div>
                             <div class="small text-secondary"><?= esc(ui_date($transaction['transaction_date'])) ?> · <span class="badge <?= ui_transaction_badge($transaction) ?>"><?= esc(ui_label('transaction', $transaction['type'])) ?></span></div>
