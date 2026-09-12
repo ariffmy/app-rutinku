@@ -88,6 +88,17 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringNotContainsString('class="row mb-0"', $view);
     }
 
+    public function testChildMobileNavigationUsesSixEqualUnbrokenTabs(): void
+    {
+        $layout = file_get_contents(APPPATH . 'Views/layouts/child.php');
+        $css = file_get_contents(FCPATH . 'assets/css/app.css');
+
+        $this->assertSame(6, substr_count($layout, '<a class="nav-link'));
+        $this->assertStringContainsString('grid-template-columns: repeat(6, minmax(0, 1fr))', $css);
+        $this->assertStringContainsString('white-space: nowrap', $css);
+        $this->assertStringContainsString('overflow-wrap: normal', $css);
+    }
+
     public function testCardsUseOneSharedPaddingValue(): void
     {
         $css = file_get_contents(FCPATH . 'assets/css/app.css');

@@ -361,6 +361,25 @@ body {
     overflow-wrap: anywhere;
 }
 
+@media (max-width: 575.98px) {
+    .child-nav > .container {
+        display: grid !important;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: .15rem;
+        padding-inline: .35rem;
+    }
+
+    .child-nav .nav-link {
+        width: 100%;
+        min-height: 46px;
+        padding: .55rem .1rem;
+        font-size: clamp(.625rem, 2.7vw, .75rem);
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+}
+
 .child-task-row {
     min-height: 72px;
 }
