@@ -12,12 +12,12 @@ $age = $birth && $birth <= $today ? $birth->diff($today)->y . ' tahun' : '—';
     <p class="text-secondary"><?= esc($family['name']) ?></p>
     <p class="h4"><?= ui_icon('star') ?> <?= esc($balance) ?> mata</p>
 </header>
-<section class="card border-0 shadow-sm mb-4"><div class="card-body">
-    <h2 class="h5">Tentang saya</h2>
-    <dl class="row mb-0">
-        <dt class="col-5">Tarikh lahir</dt><dd class="col-7 text-end"><?= esc(ui_date($dob)) ?></dd>
-        <dt class="col-5">Umur</dt><dd class="col-7 text-end"><?= esc($age) ?></dd>
-        <dt class="col-5">Ibu bapa</dt><dd class="col-7 text-end"><?= esc(implode(', ', array_column($parents, 'name')) ?: '—') ?></dd>
+<section class="card child-compact-card border-0 shadow-sm mb-3"><div class="card-body">
+    <h2 class="h6 mb-2">Tentang saya</h2>
+    <dl class="child-profile-details">
+        <dt>Tarikh lahir</dt><dd><?= esc(ui_date($dob)) ?></dd>
+        <dt>Umur</dt><dd><?= esc($age) ?></dd>
+        <dt>Ibu bapa</dt><dd><?= esc(implode(', ', array_column($parents, 'name')) ?: '—') ?></dd>
     </dl>
 </div></section>
 <dialog id="profile-photo-dialog" class="profile-photo-dialog" aria-labelledby="photo-dialog-title">

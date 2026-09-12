@@ -75,6 +75,17 @@ final class UiLanguageTest extends CIUnitTestCase
         $this->assertStringContainsString('.child-reward-card .btn', $css);
     }
 
+    public function testChildProfileCardSharesTheCompactAchievementLayout(): void
+    {
+        $view = file_get_contents(APPPATH . 'Views/child/profile.php');
+        $css = file_get_contents(FCPATH . 'assets/css/app.css');
+
+        $this->assertStringContainsString('card child-compact-card', $view);
+        $this->assertStringContainsString('class="child-profile-details"', $view);
+        $this->assertStringContainsString('.child-profile-details { display: grid;', $css);
+        $this->assertStringNotContainsString('class="row mb-0"', $view);
+    }
+
     public function testCardsUseOneSharedPaddingValue(): void
     {
         $css = file_get_contents(FCPATH . 'assets/css/app.css');
